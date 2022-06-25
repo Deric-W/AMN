@@ -17,6 +17,7 @@ __all__ = (
 @unique
 class Instruction(AbstractInstruction[tuple["Instruction", int]], Enum, metaclass=AbstractEnumMeta):
     """AM0 instruction"""
+
     ADD   = 1
     MUL   = 2
     SUB   = 3
@@ -44,19 +45,6 @@ class Instruction(AbstractInstruction[tuple["Instruction", int]], Enum, metaclas
             return (cls[name], 0)
         else:
             return (cls[name], int(payload))
-
-    @classmethod
-    def parse_program(cls, source: str) -> Iterator[tuple[Instruction, int]]:
-        """parse a program consisting of multiple lines"""
-        for number, line in enumerate(source.split("\n"), start=1):
-            try:
-                if not line or line.isspace():
-                    continue
-                yield cls.parse(line)
-            except KeyError as error:
-                raise ValueError(f"invalid instruction at line {number}") from error
-            except ValueError as error:
-                raise ValueError(f"invalid payload at line {number}") from error
 
     def is_jump(self) -> bool:
         """check if the instruction is a jump"""

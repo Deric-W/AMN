@@ -6,13 +6,14 @@ from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from enum import EnumMeta
 from collections.abc import Iterator, Sequence, Mapping
-from typing import TypeVar, Generic
+from typing import Type, TypeVar, Generic
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __author__  = "Eric Niklas Wolf"
 __email__   = "eric_niklas.wolf@mailbox.tu-dresden.de"
 __all__ = (
     "am0",
+    "am1",
     "repl",
     "AbstractEnumMeta",
     "AbstractInstruction",
@@ -48,6 +49,8 @@ class AbstractInstruction(Generic[T], metaclass=ABCMeta):
                 raise ValueError(f"invalid instruction at line {number}") from error
             except ValueError as error:
                 raise ValueError(f"invalid payload at line {number}") from error
+            except Exception as error:
+                raise ValueError(f"error while parsing line {number}") from error
 
 
 class AbstractMachine(Generic[I], metaclass=ABCMeta):
@@ -59,7 +62,7 @@ class AbstractMachine(Generic[I], metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def default(cls: T, input: Iterator[int]) -> T:
+    def default(cls: Type[T], input: Iterator[int]) -> T:
         """create an instance in the default state"""
         raise NotImplementedError()
 
@@ -75,7 +78,7 @@ class AbstractMachine(Generic[I], metaclass=ABCMeta):
     def execute_program(self, program: Sequence[I]) -> Iterator[int]:
         """execute a program, yielding occuring output"""
         self.counter = 1
-        while 0 < self.counter < len(program):
+        while 0 < self.counter <= len(program):
             output = self.execute_instruction(program[self.counter - 1])
             if output is not None:
                 yield output

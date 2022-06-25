@@ -35,19 +35,15 @@ class REPL(Generic[T], Cmd):
         """execute an instruction"""
         try:
             instruction = self.instruction.parse(arg)
-        except KeyError:
-            self.stdout.write("Error: invalid instruction\n")
-        except ValueError:
-            self.stdout.write("Error: invalid payload\n")
+        except Exception as error:
+            self.stdout.write(f"Error while parsing: {error!r}\n")
         else:
             try:
                 output = self.machine.execute_instruction(instruction)
-            except KeyError:
-                self.stdout.write("Error: invalid memory address\n")
+            except LookupError:
+                self.stdout.write("Error: invalid memory address or stack size\n")
             except ValueError:
                 self.stdout.write("Error: invalid input\n")
-            except IndexError:
-                self.stdout.write("Error: invalid stack size\n")
             else:
                 if output is not None:
                     self.stdout.write(f"Output: {output}\n")
