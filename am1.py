@@ -29,9 +29,12 @@ class MemoryContext(Enum):
     def resolve_address(self, address: int, reference_pointer: int) -> int:
         """resolve an relative address to a absolute one"""
         if self is MemoryContext.LOCAL:
-            return reference_pointer + address
-        else:
-            return address
+            address += reference_pointer
+        if address <= 0:
+            raise ValueError(
+                f"address {address} references outside the runtime stack (reference pointer: {reference_pointer})"
+            )
+        return address
 
 
 @unique
@@ -220,12 +223,14 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
                 self.reference_pointer = len(self.runtime_stack)
             case (Instruction.INIT, _, variables):
                 self.runtime_stack.extend(repeat(0, variables))
-            case (Instruction.RET, _, variables):
+            case (Instruction.RET, _, variables) if self.reference_pointer > 1:
                 self.counter = self.runtime_stack[self.reference_pointer - 2] - 1
                 self.reference_pointer = self.runtime_stack[self.reference_pointer - 1]
                 del self.runtime_stack[-variables - 2:]
-            case i:
-                raise ValueError(f"invalid instruction: '{i}'")
+            case (Instruction.RET, _, _):
+                raise LookupError("stack is too small to return")
+            case invalid:
+                raise ValueError(f"invalid instruction: '{invalid}'")
         self.counter += 1
         return value
 
