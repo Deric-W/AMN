@@ -40,10 +40,8 @@ class REPL(Generic[T], Cmd):
         else:
             try:
                 output = self.machine.execute_instruction(instruction)
-            except LookupError:
-                self.stdout.write("Error: invalid memory address or stack size\n")
-            except ValueError:
-                self.stdout.write("Error: invalid input\n")
+            except (LookupError, ValueError) as error:
+                self.stdout.write(f"Error while executing: {error!r}\n")
             else:
                 if output is not None:
                     self.stdout.write(f"Output: {output}\n")
