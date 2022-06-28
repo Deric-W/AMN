@@ -3,7 +3,7 @@
 """Simple virtual machine for the AM1 instruction set"""
 
 from __future__ import annotations
-from collections.abc import Mapping, Iterator
+from collections.abc import Iterator, Mapping
 from enum import Enum, unique
 import re
 from itertools import repeat
@@ -223,10 +223,11 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
                 self.reference_pointer = len(self.runtime_stack)
             case (Instruction.INIT, _, variables):
                 self.runtime_stack.extend(repeat(0, variables))
-            case (Instruction.RET, _, variables) if self.reference_pointer > 1:
+            case (Instruction.RET, _, parameters) if self.reference_pointer > 1:
+                old_reference = self.reference_pointer
                 self.counter = self.runtime_stack[self.reference_pointer - 2] - 1
                 self.reference_pointer = self.runtime_stack[self.reference_pointer - 1]
-                del self.runtime_stack[-variables - 2:]
+                del self.runtime_stack[old_reference - parameters - 2:]
             case (Instruction.RET, _, _):
                 raise LookupError("stack is too small to return")
             case invalid:
