@@ -3,7 +3,7 @@
 """Simple virtual machine for the AM0 instruction set"""
 
 from __future__ import annotations
-from collections.abc import Mapping, Iterator
+from collections.abc import Iterator, Iterable, Mapping
 from enum import Enum, unique
 from . import AbstractEnumMeta, AbstractInstruction, AbstractMachine
 
@@ -86,6 +86,17 @@ class Machine(AbstractMachine[tuple[Instruction, int]]):
             "Memory": memory
         }
 
+    def state(self, input: Iterable[int], output: Iterable[int]) -> str:
+        """create a string representation of the current machine state"""
+        memory = ", ".join(f"{key}/{value}" for key, value in self.memory.items())
+        return (
+            f"({self.counter}, "
+            f"{' : '.join(map(str, self.stack)):ε<1}, "
+            f"[{memory}], "
+            f"{' : '.join(map(str, input)):ε<1}, "
+            f"{' : '.join(map(str, output)):ε<1})"
+        )
+
     def execute_instruction(self, instruction: tuple[Instruction, int]) -> int | None:
         """execute an instruction, returning the output if produced"""
         value = None
@@ -123,23 +134,23 @@ class Machine(AbstractMachine[tuple[Instruction, int]]):
             case (Instruction.GE, _):
                 self.stack[-2] = self.stack[-2] >= self.stack[-1]
                 self.stack.pop()
-            case (Instruction.LOAD, n):
-                self.stack.append(self.memory[n])
-            case (Instruction.STORE, n):
-                self.memory[n] = self.stack.pop()
-            case (Instruction.LIT, n):
-                self.stack.append(n)
-            case (Instruction.JMP, n):
-                self.counter = n - 1
-            case (Instruction.JMC, n):
+            case (Instruction.LOAD, address):
+                self.stack.append(self.memory[address])
+            case (Instruction.STORE, address):
+                self.memory[address] = self.stack.pop()
+            case (Instruction.LIT, literal):
+                self.stack.append(literal)
+            case (Instruction.JMP, counter):
+                self.counter = counter - 1
+            case (Instruction.JMC, counter):
                 if self.stack.pop() == 0:
-                    self.counter = n - 1
-            case (Instruction.WRITE, n):
-                value = self.memory[n]
-            case (Instruction.READ, n):
-                self.memory[n] = next(self.input)
-            case i:
-                raise ValueError(f"invalid instruction: '{i}'")
+                    self.counter = counter - 1
+            case (Instruction.WRITE, address):
+                value = self.memory[address]
+            case (Instruction.READ, address):
+                self.memory[address] = next(self.input)
+            case invalid:
+                raise ValueError(f"invalid instruction: '{invalid}'")
         self.counter += 1
         return value
 

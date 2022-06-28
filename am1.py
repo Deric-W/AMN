@@ -3,7 +3,7 @@
 """Simple virtual machine for the AM1 instruction set"""
 
 from __future__ import annotations
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator, Iterable, Sequence, Mapping
 from enum import Enum, unique
 import re
 from itertools import repeat
@@ -145,6 +145,30 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
             "Reference Pointer": self.reference_pointer
         }
 
+    def frames(self) -> Iterator[Sequence[int]]:
+        """
+        Yield the runtime stack split into call frames from latest to first.
+        Parameters are part of the previous frame!
+        """
+        previous_reference = len(self.runtime_stack) + 2
+        reference = self.reference_pointer
+        while reference > 0:
+            yield self.runtime_stack[reference - 2:previous_reference - 2]
+            previous_reference, reference = reference, self.runtime_stack[reference - 1]
+        if previous_reference > 2:
+            yield self.runtime_stack[:previous_reference - 2]
+
+    def state(self, input: Iterable[int], output: Iterable[int]) -> str:
+        """create a string representation of the current machine state"""
+        return (
+            f"({self.counter}, "
+            f"{' : '.join(map(str, self.stack)):ε<1}, "
+            f"{' : '.join(map(str, self.runtime_stack)):ε<1}, "
+            f"{self.reference_pointer}, "
+            f"{' : '.join(map(str, input)):ε<1}, "
+            f"{' : '.join(map(str, output)):ε<1})"
+        )
+
     def execute_instruction(self, instruction: tuple[Instruction, MemoryContext, int]) -> int | None:
         """execute an instruction, returning the output if produced"""
         value = None
@@ -195,13 +219,13 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
             case (Instruction.STOREI, _, address):
                 index = MemoryContext.LOCAL.resolve_address(address, self.reference_pointer) - 1
                 self.runtime_stack[self.runtime_stack[index] - 1] = self.stack.pop()
-            case (Instruction.LIT, _, n):
-                self.stack.append(n)
-            case (Instruction.JMP, _, n):
-                self.counter = n - 1
-            case (Instruction.JMC, _, n):
+            case (Instruction.LIT, _, literal):
+                self.stack.append(literal)
+            case (Instruction.JMP, _, counter):
+                self.counter = counter - 1
+            case (Instruction.JMC, _, counter):
                 if self.stack.pop() == 0:
-                    self.counter = n - 1
+                    self.counter = counter - 1
             case (Instruction.WRITE, context, address):
                 index = context.resolve_address(address, self.reference_pointer) - 1
                 value = self.runtime_stack[index]

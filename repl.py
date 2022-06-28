@@ -58,6 +58,11 @@ class REPL(Generic[T], Cmd):
             self.stdout.write(f"{key}: {value}\n")
         return False
 
+    def do_state(self, _) -> bool:
+        """print the current state of the machine (inputs and outputs are always empty)"""
+        self.stdout.write(f"{self.machine.state([], [])}\n")
+        return False
+
     def default(self, line: str) -> None:
         """print an error"""
         self.stdout.write(f"*** Unknown command: {line}\n")

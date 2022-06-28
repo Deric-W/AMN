@@ -5,10 +5,10 @@
 from __future__ import annotations
 from abc import ABCMeta, abstractmethod
 from enum import EnumMeta
-from collections.abc import Iterator, Sequence, Mapping
+from collections.abc import Iterator, Iterable, Sequence, Mapping
 from typing import Type, TypeVar, Generic
 
-__version__ = "0.4.3"
+__version__ = "0.5.0"
 __author__  = "Eric Niklas Wolf"
 __email__   = "eric_niklas.wolf@mailbox.tu-dresden.de"
 __all__ = (
@@ -71,17 +71,20 @@ class AbstractMachine(Generic[I], metaclass=ABCMeta):
         return {"Counter: ": self.counter}
 
     @abstractmethod
+    def state(self, input: Iterable[int], output: Iterable[int]) -> str:
+        """create a string representation of the current machine state"""
+        raise NotImplementedError()
+
+    @abstractmethod
     def execute_instruction(self, instruction: I) -> int | None:
         """execute an instruction, returning the output if produced"""
         raise NotImplementedError()
 
-    def execute_program(self, program: Sequence[I]) -> Iterator[int]:
-        """execute a program, yielding occuring output"""
+    def execute_program(self, program: Sequence[I]) -> Iterator[int | None]:
+        """execute a program, yielding after every instruction"""
         self.counter = 1
         while 0 < self.counter <= len(program):
-            output = self.execute_instruction(program[self.counter - 1])
-            if output is not None:
-                yield output
+            yield self.execute_instruction(program[self.counter - 1])
 
     @abstractmethod
     def reset(self) -> None:
