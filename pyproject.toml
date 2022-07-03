@@ -1,0 +1,34 @@
+[project]
+name = "AMN"
+version = "5.0.0"
+description = "Virtual machines for the AMN instructions sets"
+requires-python = ">=3.10"
+keywords = [
+    "AM0",
+    "AM1",
+    "AMN"
+]
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Education",
+    "Topic :: Utilities",
+    "Typing :: Typed"
+]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.license]
+file = "LICENSE"
+
+[[project.authors]]
+name = "Eric Niklas Wolf"
+email = "eric_niklas.wolf@mailbox.tu-dresden.de"
+
+[project.scripts]
+amn = "AMN.main:main"

@@ -15,6 +15,7 @@ __all__ = (
     "am0",
     "am1",
     "repl",
+    "main",
     "AbstractEnumMeta",
     "AbstractInstruction",
     "AbstractMachine"

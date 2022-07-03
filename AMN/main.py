@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-"""Execute the module"""
+"""CLI commands"""
 
 import sys
 from typing import Type, TypeVar
@@ -11,6 +11,11 @@ from .am0 import Instruction as AM0Instruction, Machine as AM0Machine
 from .am1 import Instruction as AM1Instruction, Machine as AM1Machine
 from .repl import REPL
 
+__all__ = (
+    "MACHINES",
+    "ARGUMENT_PARSER",
+    "main"
+)
 
 T = TypeVar("T")
 
@@ -18,6 +23,13 @@ MACHINES: dict[str, tuple[Type[AbstractInstruction], Type[AbstractMachine]]] = {
     "AM0": (AM0Instruction, AM0Machine),
     "AM1": (AM1Instruction, AM1Machine)
 }
+
+
+def main() -> int:
+    """CLI entry point"""
+    args = ARGUMENT_PARSER.parse_args()
+    Instruction, Machine = MACHINES[args.instructions.upper()]
+    return args.main(Instruction, Machine, args)
 
 
 def main_repl(instruction: Type[AbstractInstruction[T]], machine: Type[AbstractMachine[T]], args: Namespace) -> int:
@@ -95,8 +107,3 @@ TRACE_PARSER.add_argument(
     help="file to read instructions from (omit for stdin)"
 )
 TRACE_PARSER.set_defaults(main=main_trace)
-
-if __name__ == "__main__":
-    args = ARGUMENT_PARSER.parse_args()
-    Instruction, Machine = MACHINES[args.instructions.upper()]
-    sys.exit(args.main(Instruction, Machine, args))
