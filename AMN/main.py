@@ -52,12 +52,13 @@ def main_trace(instruction: Type[AbstractInstruction[T]], machine: Type[Abstract
     """entry point for the trace subcommand"""
     program = tuple(instruction.parse_program(args.file.read()))
     output: list[int] = []
+    args.input.reverse()
     _machine = machine.default(args.input.pop() for _ in reversed(args.input))
-    sys.stderr.write(f"{_machine.state(args.input, output)}\n")
+    sys.stderr.write(f"{_machine.state(reversed(args.input), output)}\n")
     for value in _machine.execute_program(program):
         if value is not None:
             output.append(value)
-        sys.stderr.write(f"{_machine.state(args.input, output)}\n")
+        sys.stderr.write(f"{_machine.state(reversed(args.input), output)}\n")
     return 0
 
 

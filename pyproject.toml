@@ -1,6 +1,6 @@
 [project]
 name = "AMN"
-version = "5.0.0"
+version = "0.5.1"
 description = "Virtual machines for the AMN instructions sets"
 requires-python = ">=3.10"
 keywords = [
