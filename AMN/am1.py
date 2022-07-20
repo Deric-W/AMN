@@ -24,11 +24,11 @@ class MemoryContext(Enum):
     """Context relative to which an index should be loaded"""
 
     GLOBAL = 0
-    LOCAL  = 1
+    LOKAL  = 1
 
     def resolve_address(self, address: int, reference_pointer: int) -> int:
         """resolve an relative address to a absolute one"""
-        if self is MemoryContext.LOCAL:
+        if self is MemoryContext.LOKAL:
             address += reference_pointer
         if address <= 0:
             raise ValueError(
@@ -81,17 +81,17 @@ class Instruction(AbstractInstruction[tuple["Instruction", MemoryContext, int]],
         if args is not None:
             first, sep, last = args.partition(",")
             if sep == "":
-                return (cls[name], MemoryContext.LOCAL, int(first))
+                return (cls[name], MemoryContext.LOKAL, int(first))
             else:
                 return (cls[name], MemoryContext[first.upper()], int(last))
         elif arg is not None:
-            return (cls[name], MemoryContext.LOCAL, int(arg))
+            return (cls[name], MemoryContext.LOKAL, int(arg))
         else:
-            return (cls[name], MemoryContext.LOCAL, 0)
+            return (cls[name], MemoryContext.LOKAL, 0)
 
     def is_jump(self) -> bool:
         """check if the instruction is a jump"""
-        return 17 < self.value < 30
+        return self.value in {18, 19, 25, 27}
 
     def has_payload(self) -> bool:
         """check if the instruction uses its payload"""
@@ -162,7 +162,7 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
         """create a string representation of the current machine state"""
         return (
             f"({self.counter}, "
-            f"{' : '.join(map(str, self.stack)):ε<1}, "
+            f"{' : '.join(map(str, reversed(self.stack))):ε<1}, "
             f"{' : '.join(map(str, self.runtime_stack)):ε<1}, "
             f"{self.reference_pointer}, "
             f"{' : '.join(map(str, input)):ε<1}, "
@@ -212,12 +212,12 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
             case (Instruction.LOADA, context, address):
                 self.stack.append(context.resolve_address(address, self.reference_pointer))
             case (Instruction.LOADI, _, address):
-                index = MemoryContext.LOCAL.resolve_address(address, self.reference_pointer) - 1
+                index = MemoryContext.LOKAL.resolve_address(address, self.reference_pointer) - 1
                 self.stack.append(self.runtime_stack[self.runtime_stack[index] - 1])
             case (Instruction.STORE, context, address):
                 self.runtime_stack[context.resolve_address(address, self.reference_pointer) - 1] = self.stack.pop()
             case (Instruction.STOREI, _, address):
-                index = MemoryContext.LOCAL.resolve_address(address, self.reference_pointer) - 1
+                index = MemoryContext.LOKAL.resolve_address(address, self.reference_pointer) - 1
                 self.runtime_stack[self.runtime_stack[index] - 1] = self.stack.pop()
             case (Instruction.LIT, _, literal):
                 self.stack.append(literal)
@@ -230,13 +230,13 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
                 index = context.resolve_address(address, self.reference_pointer) - 1
                 value = self.runtime_stack[index]
             case (Instruction.WRITEI, _, address):
-                index = MemoryContext.LOCAL.resolve_address(address, self.reference_pointer) - 1
+                index = MemoryContext.LOKAL.resolve_address(address, self.reference_pointer) - 1
                 value = self.runtime_stack[self.runtime_stack[index] - 1]
             case (Instruction.READ, context, address):
                 index = context.resolve_address(address, self.reference_pointer) - 1
                 self.runtime_stack[index] = next(self.input)
             case (Instruction.READI, _, address):
-                index = MemoryContext.LOCAL.resolve_address(address, self.reference_pointer) - 1
+                index = MemoryContext.LOKAL.resolve_address(address, self.reference_pointer) - 1
                 self.runtime_stack[self.runtime_stack[index] - 1] = next(self.input)
             case (Instruction.PUSH, _, _):
                 self.runtime_stack.append(self.stack.pop())
