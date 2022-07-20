@@ -8,7 +8,7 @@ from enum import EnumMeta
 from collections.abc import Iterator, Iterable, Sequence, Mapping
 from typing import Type, TypeVar, Generic
 
-__version__ = "0.5.1"
+__version__ = "0.5.2"
 __author__  = "Eric Niklas Wolf"
 __email__   = "eric_niklas.wolf@mailbox.tu-dresden.de"
 __all__ = (
@@ -42,16 +42,22 @@ class AbstractInstruction(Generic[T], metaclass=ABCMeta):
     def parse_program(cls, source: str) -> Iterator[T]:
         """parse a program consisting of multiple lines"""
         for number, line in enumerate(source.split("\n"), start=1):
-            try:
-                if not line or line.isspace():
-                    continue
-                yield cls.parse(line)
-            except KeyError as error:
-                raise ValueError(f"invalid instruction at line {number}") from error
-            except ValueError as error:
-                raise ValueError(f"invalid payload at line {number}") from error
-            except Exception as error:
-                raise ValueError(f"error while parsing line {number}") from error
+            line = line.rstrip()
+            if line.endswith(";"):
+                try:
+                    instruction = cls.parse(line[:-1])
+                except KeyError as error:
+                    raise ValueError(f"invalid instruction at line {number}") from error
+                except ValueError as error:
+                    raise ValueError(f"invalid payload at line {number}") from error
+                except Exception as error:
+                    raise ValueError(f"error while parsing line {number}") from error
+                else:
+                    yield instruction
+            elif line:
+                raise ValueError("missing semicolon")
+            else:
+                continue
 
 
 class AbstractMachine(Generic[I], metaclass=ABCMeta):

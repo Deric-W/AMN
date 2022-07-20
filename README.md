@@ -40,16 +40,16 @@ Exiting REPL...
 Example program which outputs the biggest of two numbers:
 
 ```
-READ 0
-READ 1
-LOAD 0
-LOAD 1
-GT
-JMC 10
-LOAD 0
-STORE 2
-JMP 12
-LOAD 1
-STORE 2
-WRITE 2
+READ 0;
+READ 1;
+LOAD 0;
+LOAD 1;
+GT;
+JMC 10;
+LOAD 0;
+STORE 2;
+JMP 12;
+LOAD 1;
+STORE 2;
+WRITE 2;
 ```

@@ -91,7 +91,7 @@ class Machine(AbstractMachine[tuple[Instruction, int]]):
         memory = ", ".join(f"{key}/{value}" for key, value in self.memory.items())
         return (
             f"({self.counter}, "
-            f"{' : '.join(map(str, self.stack)):ε<1}, "
+            f"{' : '.join(map(str, reversed(self.stack))):ε<1}, "
             f"[{memory}], "
             f"{' : '.join(map(str, input)):ε<1}, "
             f"{' : '.join(map(str, output)):ε<1})"
