@@ -8,7 +8,7 @@ from enum import EnumMeta
 from collections.abc import Iterator, Iterable, Sequence, Mapping
 from typing import Type, TypeVar, Generic
 
-__version__ = "0.5.3"
+__version__ = "0.6.0"
 __author__  = "Eric Niklas Wolf"
 __email__   = "eric_niklas.wolf@mailbox.tu-dresden.de"
 __all__ = (
@@ -55,7 +55,7 @@ class AbstractInstruction(Generic[T], metaclass=ABCMeta):
                 else:
                     yield instruction
             elif line:
-                raise ValueError("missing semicolon")
+                raise ValueError(f"missing semicolon on line {number}")
             else:
                 continue
 

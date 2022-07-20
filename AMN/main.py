@@ -42,9 +42,13 @@ def main_repl(instruction: Type[AbstractInstruction[T]], machine: Type[AbstractM
 def main_exec(instruction: Type[AbstractInstruction[T]], machine: Type[AbstractMachine[T]], args: Namespace) -> int:
     """entry point for the exec subcommand"""
     program = tuple(instruction.parse_program(args.file.read()))
-    for value in machine.default(map(int, map(input, repeat("Input: ")))).execute_program(program):
+    _machine = machine.default(map(int, map(input, repeat("Input: "))))
+    for value in _machine.execute_program(program):
         if value is not None:
             print(f"Output: {value}")
+    if args.interactive:
+        repl = REPL(instruction, _machine)
+        repl.cmdloop(f"Welcome the the {args.instructions.upper()} REPL, type 'help' for help")
     return 0
 
 
@@ -89,6 +93,12 @@ EXEC_PARSER.add_argument(
     type=FileType("r"),
     default=sys.stdin,
     help="file to read instructions from (omit for stdin)"
+)
+EXEC_PARSER.add_argument(
+    "-i",
+    "--interactive",
+    action="store_true",
+    help="open the REPL after executing the program"
 )
 EXEC_PARSER.set_defaults(main=main_exec)
 
