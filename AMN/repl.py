@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 from cmd import Cmd
-from typing import Type, TypeVar, Generic
+from typing import Type, TypeVar, Generic, Any
 from . import AbstractInstruction, AbstractMachine
 
 __all__ = (
@@ -21,7 +21,7 @@ class REPL(Generic[T], Cmd):
 
     machine: AbstractMachine[T]
 
-    def __init__(self, instruction: Type[AbstractInstruction[T]], machine: AbstractMachine[T], *args, **kwargs):
+    def __init__(self, instruction: Type[AbstractInstruction[T]], machine: AbstractMachine[T], *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.instruction = instruction
         self.machine = machine
@@ -47,18 +47,18 @@ class REPL(Generic[T], Cmd):
                     self.stdout.write(f"Output: {output}\n")
         return False
 
-    def do_reset(self, _) -> bool:
+    def do_reset(self, _: object) -> bool:
         """reset the machine"""
         self.machine.reset()
         return False
 
-    def do_status(self, _) -> bool:
+    def do_status(self, _: object) -> bool:
         """print the current status of the machine"""
         for key, value in self.machine.status().items():
             self.stdout.write(f"{key}: {value}\n")
         return False
 
-    def do_state(self, _) -> bool:
+    def do_state(self, _: object) -> bool:
         """print the current state of the machine (inputs and outputs are always empty)"""
         self.stdout.write(f"{self.machine.state([], [])}\n")
         return False
@@ -71,7 +71,7 @@ class REPL(Generic[T], Cmd):
         """exit the repl"""
         return self.do_exit(arg)
 
-    def do_exit(self, _) -> bool:
+    def do_exit(self, _: object) -> bool:
         """exit the repl"""
         self.stdout.write("Exiting REPL...\n")
         return True

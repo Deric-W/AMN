@@ -43,3 +43,14 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.package-data]
 AMN = ["py.typed"]
+
+[tool.mypy]
+disallow_any_unimported = true
+disallow_any_generics = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_unreachable = false    # problems with match statement

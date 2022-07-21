@@ -3,7 +3,7 @@
 """CLI commands"""
 
 import sys
-from typing import Type, TypeVar
+from typing import Type, TypeVar, Any, cast
 from argparse import ArgumentParser, FileType, Namespace
 from itertools import repeat
 from . import __doc__, __version__, AbstractInstruction, AbstractMachine
@@ -19,7 +19,7 @@ __all__ = (
 
 T = TypeVar("T")
 
-MACHINES: dict[str, tuple[Type[AbstractInstruction], Type[AbstractMachine]]] = {
+MACHINES: dict[str, tuple[Type[AbstractInstruction[Any]], Type[AbstractMachine[Any]]]] = {
     "AM0": (AM0Instruction, AM0Machine),
     "AM1": (AM1Instruction, AM1Machine)
 }
@@ -29,7 +29,7 @@ def main() -> int:
     """CLI entry point"""
     args = ARGUMENT_PARSER.parse_args()
     Instruction, Machine = MACHINES[args.instructions.upper()]
-    return args.main(Instruction, Machine, args)
+    return cast(int, args.main(Instruction, Machine, args))
 
 
 def main_repl(instruction: Type[AbstractInstruction[T]], machine: Type[AbstractMachine[T]], args: Namespace) -> int:
