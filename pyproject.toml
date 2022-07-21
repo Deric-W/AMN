@@ -30,5 +30,16 @@ file = "LICENSE"
 name = "Eric Niklas Wolf"
 email = "eric_niklas.wolf@mailbox.tu-dresden.de"
 
+[project.urls]
+Repository = "https://github.com/Deric-W/study_utils/tree/main/Programming/AMN"
+Bugtracker = "https://github.com/Deric-W/study_utils/issues"
+
 [project.scripts]
 amn = "AMN.main:main"
+
+[build-system]
+requires = ["setuptools >= 61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+AMN = ["py.typed"]
