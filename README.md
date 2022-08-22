@@ -1,6 +1,7 @@
-# Programming
+# AMN
 
-## AMN
+![Tests](https://github.com/Deric-W/AMN/actions/workflows/Tests.yaml/badge.svg)
+[![codecov](https://codecov.io/gh/Deric-W/AMN/branch/main/graph/badge.svg?token=SU3982mC17)](https://codecov.io/gh/Deric-W/AMN)
 
 The AMN package implements a simple virtual machine for the AM0 and AM1 instructions sets.
 
@@ -8,11 +9,17 @@ To use it, simply execute it with `python3 -m AMN -i <instruction set> exec path
 
 If you want an interactive console just use `python3 -m AMN -i <instruction set> repl`.
 
-### Requirements
+## Requirements
 
 Python >= 3.10 is required to use the utility.
 
-### Examples
+## Installation
+
+```sh
+python3 -m pip install AMN
+```
+
+## Examples
 
 The REPL (read eval print loop) in action:
 
