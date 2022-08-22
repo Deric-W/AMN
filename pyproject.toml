@@ -23,16 +23,13 @@ classifiers = [
 file = "README.md"
 content-type = "text/markdown"
 
-[project.license]
-file = "LICENSE"
-
 [[project.authors]]
 name = "Eric Niklas Wolf"
 email = "eric_niklas.wolf@mailbox.tu-dresden.de"
 
 [project.urls]
-Repository = "https://github.com/Deric-W/study_utils/tree/main/Programming/AMN"
-Bugtracker = "https://github.com/Deric-W/study_utils/issues"
+Repository = "https://github.com/Deric-W/AMN"
+Bugtracker = "https://github.com/Deric-W/AMN/issues"
 
 [project.scripts]
 amn = "AMN.main:main"
