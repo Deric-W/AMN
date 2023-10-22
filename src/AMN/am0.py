@@ -117,22 +117,22 @@ class Machine(AbstractMachine[tuple[Instruction, int]]):
                 self.stack[-2] = self.stack[-2] % self.stack[-1]
                 self.stack.pop()
             case (Instruction.EQ, _):
-                self.stack[-2] = self.stack[-2] == self.stack[-1]
+                self.stack[-2] = int(self.stack[-2] == self.stack[-1])
                 self.stack.pop()
             case (Instruction.NE, _):
-                self.stack[-2] = self.stack[-2] != self.stack[-1]
+                self.stack[-2] = int(self.stack[-2] != self.stack[-1])
                 self.stack.pop()
             case (Instruction.LT, _):
-                self.stack[-2] = self.stack[-2] < self.stack[-1]
+                self.stack[-2] = int(self.stack[-2] < self.stack[-1])
                 self.stack.pop()
             case (Instruction.GT, _):
-                self.stack[-2] = self.stack[-2] > self.stack[-1]
+                self.stack[-2] = int(self.stack[-2] > self.stack[-1])
                 self.stack.pop()
             case (Instruction.LE, _):
-                self.stack[-2] = self.stack[-2] <= self.stack[-1]
+                self.stack[-2] = int(self.stack[-2] <= self.stack[-1])
                 self.stack.pop()
             case (Instruction.GE, _):
-                self.stack[-2] = self.stack[-2] >= self.stack[-1]
+                self.stack[-2] = int(self.stack[-2] >= self.stack[-1])
                 self.stack.pop()
             case (Instruction.LOAD, address):
                 self.stack.append(self.memory[address])

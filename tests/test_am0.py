@@ -7,7 +7,7 @@ from AMN.am0 import Machine, Instruction
 
 
 # do not remove trailing whitespace!
-EXAMPLE_PROGRAM = \
+EXAMPLE_PROGRAM1 = \
 """
 READ 2;  
 LIT 1;
@@ -34,6 +34,50 @@ JMP 6;
 WRITE 3;
 """
 
+EXAMPLE_PROGRAM2 = \
+"""
+READ 1;
+LOAD 1;
+LIT 7;
+LIT 1;
+SUB;
+DIV;
+LIT 2;
+MOD;
+STORE 1;
+LOAD 1;
+LIT 0;
+EQ;
+LOAD 1;
+LIT 0;
+NE;
+LOAD 1;
+LIT 0;
+LT;
+LOAD 1;
+LIT 0;
+GT;
+LOAD 1;
+LIT 1;
+LE;
+LOAD 1;
+LIT 1;
+GE;
+WRITE 1;
+STORE 2;
+WRITE 2;
+STORE 2;
+WRITE 2;
+STORE 2;
+WRITE 2;
+STORE 2;
+WRITE 2;
+STORE 2;
+WRITE 2;
+STORE 2;
+WRITE 2;
+"""
+
 
 class InstructionTest(TestCase):
     """AM0 instruction tests"""
@@ -56,7 +100,7 @@ class InstructionTest(TestCase):
     def test_parse_program(self) -> None:
         """test program parsing"""
         self.assertEqual(
-            list(Instruction.parse_program(EXAMPLE_PROGRAM)),
+            list(Instruction.parse_program(EXAMPLE_PROGRAM1)),
             [
                 (Instruction.READ, 2),
                 (Instruction.LIT, 1),
@@ -133,7 +177,7 @@ class MachineTest(TestCase):
 
     def test_reset(self) -> None:
         """test reset state"""
-        iterator = iter([])
+        iterator = iter(range(0))
         machine = Machine(42, [1, 2], {3: 4, 5: 6}, iterator)
         machine.reset()
         self.assertEqual(machine.counter, 1)
@@ -166,10 +210,15 @@ class MachineTest(TestCase):
 
     def test_execute(self) -> None:
         """test program execution"""
-        program = tuple(Instruction.parse_program(EXAMPLE_PROGRAM))
+        program1 = tuple(Instruction.parse_program(EXAMPLE_PROGRAM1))
+        program2 = tuple(Instruction.parse_program(EXAMPLE_PROGRAM2))
         machine = Machine.default(iter([2, 42]))
         self.assertEqual(
-            list(machine.execute_program(program)),
+            list(machine.execute_program(program1)),
             [None] * 39 + [5]
         )
-        self.assertEqual(next(machine.input), 42)
+        self.assertEqual(
+            list(filter(lambda value: value is not None, machine.execute_program(program2))),
+            [1, 1, 1, 1, 0, 1, 0]
+        )
+        self.assertIsNone(next(machine.input, None))
