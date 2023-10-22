@@ -189,22 +189,22 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
                 self.stack[-2] = self.stack[-2] % self.stack[-1]
                 self.stack.pop()
             case (Instruction.EQ, _, _):
-                self.stack[-2] = self.stack[-2] == self.stack[-1]
+                self.stack[-2] = int(self.stack[-2] == self.stack[-1])
                 self.stack.pop()
             case (Instruction.NE, _, _):
-                self.stack[-2] = self.stack[-2] != self.stack[-1]
+                self.stack[-2] = int(self.stack[-2] != self.stack[-1])
                 self.stack.pop()
             case (Instruction.LT, _, _):
-                self.stack[-2] = self.stack[-2] < self.stack[-1]
+                self.stack[-2] = int(self.stack[-2] < self.stack[-1])
                 self.stack.pop()
             case (Instruction.GT, _, _):
-                self.stack[-2] = self.stack[-2] > self.stack[-1]
+                self.stack[-2] = int(self.stack[-2] > self.stack[-1])
                 self.stack.pop()
             case (Instruction.LE, _, _):
-                self.stack[-2] = self.stack[-2] <= self.stack[-1]
+                self.stack[-2] = int(self.stack[-2] <= self.stack[-1])
                 self.stack.pop()
             case (Instruction.GE, _, _):
-                self.stack[-2] = self.stack[-2] >= self.stack[-1]
+                self.stack[-2] = int(self.stack[-2] >= self.stack[-1])
                 self.stack.pop()
             case (Instruction.LOAD, context, address):
                 index = context.resolve_address(address, self.reference_pointer) - 1

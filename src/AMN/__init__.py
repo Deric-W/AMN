@@ -8,7 +8,7 @@ from enum import EnumMeta
 from collections.abc import Iterator, Iterable, Sequence, Mapping
 from typing import Type, TypeVar, Generic
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 __author__  = "Eric Niklas Wolf"
 __email__   = "eric_niklas.wolf@mailbox.tu-dresden.de"
 __all__ = (

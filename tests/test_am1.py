@@ -7,7 +7,7 @@ from AMN.am1 import Instruction, Machine, MemoryContext
 
 
 # do not remove trailing whitespace!
-EXAMPLE_PROGRAM = \
+EXAMPLE_PROGRAM1 = \
 """
 INIT 2;
 CALL 24;
@@ -45,6 +45,55 @@ WRITE(global,2);
 RET 0; 
 """
 
+EXAMPLE_PROGRAM2 = \
+"""
+INIT 3;
+LIT 1;
+STORE 3;
+READI 3;
+LOAD 1;
+LIT 2;
+MUL;
+LIT 12;
+DIV;
+LIT 2;
+MOD;
+STORE 1;
+LOAD 1;
+LIT 0;
+EQ;
+LOAD 1;
+LIT 0;
+NE;
+LOAD 1;
+LIT 0;
+LT;
+LOAD 1;
+LIT 0;
+GT;
+LOAD 1;
+LIT 1;
+LE;
+LOAD 1;
+LIT 1;
+GE;
+WRITE 1;
+LIT 2;
+STORE 3;
+STOREI 2;
+WRITEI 2;
+STOREI 2;
+WRITEI 2;
+STOREI 2;
+WRITEI 2;
+STOREI 2;
+WRITEI 2;
+STOREI 2;
+WRITEI 2;
+STOREI 2;
+WRITEI 2;
+"""
+
 
 class InstructionTest(TestCase):
     """AM1 instruction tests"""
@@ -77,7 +126,7 @@ class InstructionTest(TestCase):
     def test_parse_program(self) -> None:
         """test program parsing"""
         self.assertEqual(
-            list(Instruction.parse_program(EXAMPLE_PROGRAM)),
+            list(Instruction.parse_program(EXAMPLE_PROGRAM1)),
             [
                 (Instruction.INIT, MemoryContext.LOKAL, 2),
                 (Instruction.CALL, MemoryContext.LOKAL, 24),
@@ -162,6 +211,22 @@ class InstructionTest(TestCase):
                 f"invalid jump data for {instruction}"
             )
 
+    def test_has_context(self) -> None:
+        """test checking whether an instruction has a context"""
+        has_context = {
+            Instruction.LOAD,
+            Instruction.LOADA,
+            Instruction.STORE,
+            Instruction.READ,
+            Instruction.WRITE
+        }
+        for instruction in Instruction:
+            self.assertEqual(
+                instruction.has_context(),
+                instruction in has_context,
+                f"invalid context data for {instruction}"
+            )
+
 
 class MachineTest(TestCase):
     """AM1 machine tests"""
@@ -176,7 +241,7 @@ class MachineTest(TestCase):
 
     def test_reset(self) -> None:
         """test reset state"""
-        iterator = iter([])
+        iterator = iter(range(0))
         machine = Machine(42, [1, 2], [4, 6], 2, iterator)
         machine.reset()
         self.assertEqual(machine.counter, 1)
@@ -211,13 +276,19 @@ class MachineTest(TestCase):
 
     def test_execute(self) -> None:
         """test program execution"""
-        program = tuple(Instruction.parse_program(EXAMPLE_PROGRAM))
+        program1 = tuple(Instruction.parse_program(EXAMPLE_PROGRAM1))
+        program2 = tuple(Instruction.parse_program(EXAMPLE_PROGRAM2))
         machine = Machine.default(iter([1, 42]))
         self.assertEqual(
-            list(machine.execute_program(program)),
+            list(machine.execute_program(program1)),
             [None] * 35 + [2, None, None]
         )
-        self.assertEqual(next(machine.input), 42)
+        machine.reset()
+        self.assertEqual(
+            list(filter(lambda value: value is not None, machine.execute_program(program2))),
+            [1, 1, 1, 1, 0, 1, 0]
+        )
+        self.assertIsNone(next(machine.input, None))
 
     def test_frames(self) -> None:
         """test frame detection"""
