@@ -74,7 +74,7 @@ strict_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
 warn_return_any = true
-warn_unreachable = false    # problems with match statement
+warn_unreachable = true
 
 [tool.pylint]
 max-line-length = 100
