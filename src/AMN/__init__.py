@@ -3,22 +3,25 @@
 """Virtual machines for the AMN instructions sets"""
 
 from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
 from enum import EnumMeta
-from collections.abc import Iterator, Iterable, Sequence, Mapping
-from typing import Type, TypeVar, Generic
+from typing import TYPE_CHECKING, Generic, TypeVar
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator, Mapping, Sequence
 
 __version__ = "0.6.1"
 __author__  = "Eric Niklas Wolf"
 __email__   = "eric_niklas.wolf@mailbox.tu-dresden.de"
 __all__ = (
-    "am0",
-    "am1",
-    "repl",
-    "main",
     "AbstractEnumMeta",
     "AbstractInstruction",
-    "AbstractMachine"
+    "AbstractMachine",
+    "am0",
+    "am1",
+    "main",
+    "repl"
 )
 
 T = TypeVar("T")
@@ -69,7 +72,7 @@ class AbstractMachine(Generic[I], metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def default(cls: Type[T], input: Iterator[int]) -> T:
+    def default(cls: type[T], input: Iterator[int]) -> T:
         """create an instance in the default state"""
         raise NotImplementedError()
 

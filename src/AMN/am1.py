@@ -3,17 +3,22 @@
 """Simple virtual machine for the AM1 instruction set"""
 
 from __future__ import annotations
-from collections.abc import Iterator, Iterable, Sequence, Mapping
-from enum import Enum, unique
+
 import re
+from enum import Enum, unique
 from itertools import repeat
+from typing import TYPE_CHECKING
+
 from . import AbstractEnumMeta, AbstractInstruction, AbstractMachine
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator, Mapping, Sequence
 
 
 __all__ = (
-    "MemoryContext",
     "Instruction",
-    "Machine"
+    "Machine",
+    "MemoryContext"
 )
 
 INSTRUCTION_PATTERN = re.compile(r"([A-Z]{2,6})(\((.*)\)|( .*))?")

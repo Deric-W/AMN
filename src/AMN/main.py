@@ -3,23 +3,27 @@
 """CLI commands"""
 
 import sys
-from typing import Type, TypeVar, Any, cast
 from argparse import ArgumentParser, FileType, Namespace
 from itertools import repeat
-from . import __doc__, __version__, AbstractInstruction, AbstractMachine
-from .am0 import Instruction as AM0Instruction, Machine as AM0Machine
-from .am1 import Instruction as AM1Instruction, Machine as AM1Machine
+from typing import Any, TypeVar, cast
+
+from . import AbstractInstruction, AbstractMachine, __version__
+from . import __doc__ as _doc
+from .am0 import Instruction as AM0Instruction
+from .am0 import Machine as AM0Machine
+from .am1 import Instruction as AM1Instruction
+from .am1 import Machine as AM1Machine
 from .repl import REPL
 
 __all__ = (
-    "MACHINES",
     "ARGUMENT_PARSER",
+    "MACHINES",
     "main"
 )
 
 T = TypeVar("T")
 
-MACHINES: dict[str, tuple[Type[AbstractInstruction[Any]], Type[AbstractMachine[Any]]]] = {
+MACHINES: dict[str, tuple[type[AbstractInstruction[Any]], type[AbstractMachine[Any]]]] = {
     "AM0": (AM0Instruction, AM0Machine),
     "AM1": (AM1Instruction, AM1Machine)
 }
@@ -32,14 +36,14 @@ def main() -> int:
     return cast(int, args.main(Instruction, Machine, args))
 
 
-def main_repl(instruction: Type[AbstractInstruction[T]], machine: Type[AbstractMachine[T]], args: Namespace) -> int:
+def main_repl(instruction: type[AbstractInstruction[T]], machine: type[AbstractMachine[T]], args: Namespace) -> int:
     """entry point for the repl subcommand"""
     repl = REPL(instruction, machine.default(map(int, map(input, repeat("Input: ")))))
     repl.cmdloop(f"Welcome the the {args.instructions.upper()} REPL, type 'help' for help")
     return 0
 
 
-def main_exec(instruction: Type[AbstractInstruction[T]], machine: Type[AbstractMachine[T]], args: Namespace) -> int:
+def main_exec(instruction: type[AbstractInstruction[T]], machine: type[AbstractMachine[T]], args: Namespace) -> int:
     """entry point for the exec subcommand"""
     program = tuple(instruction.parse_program(args.file.read()))
     _machine = machine.default(map(int, map(input, repeat("Input: "))))
@@ -52,7 +56,7 @@ def main_exec(instruction: Type[AbstractInstruction[T]], machine: Type[AbstractM
     return 0
 
 
-def main_trace(instruction: Type[AbstractInstruction[T]], machine: Type[AbstractMachine[T]], args: Namespace) -> int:
+def main_trace(instruction: type[AbstractInstruction[T]], machine: type[AbstractMachine[T]], args: Namespace) -> int:
     """entry point for the trace subcommand"""
     program = tuple(instruction.parse_program(args.file.read()))
     output: list[int] = []
@@ -66,7 +70,7 @@ def main_trace(instruction: Type[AbstractInstruction[T]], machine: Type[Abstract
     return 0
 
 
-ARGUMENT_PARSER = ArgumentParser(description=__doc__)
+ARGUMENT_PARSER = ArgumentParser(description=_doc)
 ARGUMENT_PARSER.add_argument(
     "-v",
     "--version",

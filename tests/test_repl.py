@@ -6,6 +6,7 @@ from collections import deque
 from collections.abc import Iterator
 from io import StringIO
 from unittest import TestCase
+
 from AMN.am0 import Instruction, Machine
 from AMN.repl import REPL
 

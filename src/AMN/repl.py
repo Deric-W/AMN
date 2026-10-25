@@ -3,9 +3,12 @@
 """AMN REPL"""
 
 from __future__ import annotations
+
 from cmd import Cmd
-from typing import Type, TypeVar, Generic, Any
-from . import AbstractInstruction, AbstractMachine
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
+
+if TYPE_CHECKING:
+    from . import AbstractInstruction, AbstractMachine
 
 __all__ = (
     "REPL",
@@ -17,11 +20,11 @@ T = TypeVar("T")
 class REPL(Generic[T], Cmd):
     """interactive REPL"""
 
-    instruction: Type[AbstractInstruction[T]]
+    instruction: type[AbstractInstruction[T]]
 
     machine: AbstractMachine[T]
 
-    def __init__(self, instruction: Type[AbstractInstruction[T]], machine: AbstractMachine[T], *args: Any, **kwargs: Any) -> None:
+    def __init__(self, instruction: type[AbstractInstruction[T]], machine: AbstractMachine[T], *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self.instruction = instruction
         self.machine = machine

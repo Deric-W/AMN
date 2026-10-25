@@ -3,8 +3,8 @@
 """AM1 Tests"""
 
 from unittest import TestCase
-from AMN.am1 import Instruction, Machine, MemoryContext
 
+from AMN.am1 import Instruction, Machine, MemoryContext
 
 # do not remove trailing whitespace!
 EXAMPLE_PROGRAM1 = \

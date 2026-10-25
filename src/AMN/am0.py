@@ -3,10 +3,14 @@
 """Simple virtual machine for the AM0 instruction set"""
 
 from __future__ import annotations
-from collections.abc import Iterator, Iterable, Mapping
+
 from enum import Enum, unique
+from typing import TYPE_CHECKING
+
 from . import AbstractEnumMeta, AbstractInstruction, AbstractMachine
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator, Mapping
 
 __all__ = (
     "Instruction",
