@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 """AM1 Tests"""
 
 from unittest import TestCase

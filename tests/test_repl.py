@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 """REPL tests"""
 
 from collections import deque

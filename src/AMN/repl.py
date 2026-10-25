@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 """AMN REPL"""
 
 from __future__ import annotations

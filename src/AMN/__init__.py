@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 """Virtual machines for the AMN instructions sets"""
 
 from __future__ import annotations

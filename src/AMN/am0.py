@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 """Simple virtual machine for the AM0 instruction set"""
 
 from __future__ import annotations
