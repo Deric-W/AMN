@@ -5,7 +5,13 @@ from __future__ import annotations
 from enum import Enum, unique
 from typing import TYPE_CHECKING
 
-from . import AbstractEnumMeta, AbstractInstruction, AbstractMachine
+from . import (
+    AbstractEnumMeta,
+    AbstractInstruction,
+    AbstractMachine,
+    ExecutionError,
+    InvalidInstructionError,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Mapping
@@ -41,12 +47,25 @@ class Instruction(AbstractInstruction[tuple["Instruction", int]], Enum, metaclas
 
     @classmethod
     def parse(cls, line: str) -> tuple[Instruction, int]:
-        """parse an instance from a line like '<Name> <payload>' or '<Name>'"""
+        """
+        Parse an instance from a line like '<Name> <payload>' or '<Name>'.
+
+        Raises a InvalidInstructionError when the parsing fails.
+        """
         name, seperator, payload = line.partition(" ")
+        try:
+            instruction = cls[name]
+        except KeyError as error:
+            reason = "invalid instruction"
+            raise InvalidInstructionError(reason, line) from error
         if seperator == "":
-            return (cls[name], 0)
-        else:
-            return (cls[name], int(payload))
+            return (instruction, 0)
+        try:
+            number_payload = int(payload)
+        except ValueError as error:
+            reason = "invalid payload"
+            raise InvalidInstructionError(reason, line) from error
+        return (instruction, number_payload)
 
     def is_jump(self) -> bool:
         """check if the instruction is a jump"""
@@ -100,61 +119,98 @@ class Machine(AbstractMachine[tuple[Instruction, int]]):
         )
 
     def execute_instruction(self, instruction: tuple[Instruction, int]) -> int | None:
-        """execute an instruction, returning the output if produced"""
+        """
+        Execute an instruction, returning the output if produced.
+
+        Raises ExecutionError if the instruction could not be executed.
+        """
         value = None
+        opcode = instruction[0]
         match instruction:
             case (Instruction.ADD, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = self.stack[-2] + self.stack[-1]
                 self.stack.pop()
             case (Instruction.MUL, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = self.stack[-2] * self.stack[-1]
                 self.stack.pop()
             case (Instruction.SUB, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = self.stack[-2] - self.stack[-1]
                 self.stack.pop()
             case (Instruction.DIV, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = self.stack[-2] // self.stack[-1]
                 self.stack.pop()
             case (Instruction.MOD, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = self.stack[-2] % self.stack[-1]
                 self.stack.pop()
             case (Instruction.EQ, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = int(self.stack[-2] == self.stack[-1])
                 self.stack.pop()
             case (Instruction.NE, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = int(self.stack[-2] != self.stack[-1])
                 self.stack.pop()
             case (Instruction.LT, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = int(self.stack[-2] < self.stack[-1])
                 self.stack.pop()
             case (Instruction.GT, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = int(self.stack[-2] > self.stack[-1])
                 self.stack.pop()
             case (Instruction.LE, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = int(self.stack[-2] <= self.stack[-1])
                 self.stack.pop()
             case (Instruction.GE, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = int(self.stack[-2] >= self.stack[-1])
                 self.stack.pop()
             case (Instruction.LOAD, address):
-                self.stack.append(self.memory[address])
+                self.stack.append(self._load_memory(address, opcode))
             case (Instruction.STORE, address):
+                self._assert_stack(1, opcode)
                 self.memory[address] = self.stack.pop()
             case (Instruction.LIT, literal):
                 self.stack.append(literal)
             case (Instruction.JMP, counter):
                 self.counter = counter - 1
             case (Instruction.JMC, counter):
+                self._assert_stack(1, opcode)
                 if self.stack.pop() == 0:
                     self.counter = counter - 1
             case (Instruction.WRITE, address):
-                value = self.memory[address]
+                value = self._load_memory(address, opcode)
             case (Instruction.READ, address):
-                self.memory[address] = next(self.input)
-            case invalid:
-                raise ValueError(f"invalid instruction: '{invalid}'")
+                self.memory[address] = self._consume_input(opcode)
+            case _ as invalid:
+                raise ExecutionError("invalid instruction", invalid)    # noqa: EM101, TRY003
         self.counter += 1
         return value
+
+    def _assert_stack(self, depth: int, instruction: Instruction) -> None:
+        if len(self.stack) < depth:
+            reason = f"not enough values on the stack, {depth} required"
+            raise ExecutionError(reason, instruction)
+
+    def _load_memory(self, address: int, instruction: Instruction) -> int:
+        try:
+            return self.memory[address]
+        except KeyError as error:
+            reason = f"invalid memory address: {address}"
+            raise ExecutionError(reason, instruction) from error
+
+    def _consume_input(self, instruction: Instruction) -> int:
+        try:
+            return next(self.input)
+        except StopIteration as error:
+            reason = "input iterator exhausted"
+            raise ExecutionError(reason, instruction) from error
 
     def reset(self) -> None:
         """reset the machine to the default state"""

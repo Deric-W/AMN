@@ -91,6 +91,9 @@ ignore = [
 ]
 
 [tool.ruff.lint.extend-per-file-ignores]
+"src/AMN/*" = [
+    "N999"      # invalid module name
+]
 "tests/*" = [
     "PT009",    # unittest-style assert
     "PT027"     # unittest-style assertRaises

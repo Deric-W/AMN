@@ -68,8 +68,8 @@ class ReplTest(TestCase):
         self.assertEqual(
             self.stdout.getvalue(),
             (
-                f"{self.repl.prompt}Error while parsing: KeyError('sadasdasd')\n"
-                f"{self.repl.prompt}Error while executing: IndexError('list index out of range')\n"
+                f"{self.repl.prompt}Error while parsing: invalid instruction\n"
+                f"{self.repl.prompt}Error while executing: not enough values on the stack, 2 required\n"
                 f"{self.repl.prompt}Exiting REPL...\n"
             )
         )

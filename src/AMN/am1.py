@@ -7,7 +7,13 @@ from enum import Enum, unique
 from itertools import repeat
 from typing import TYPE_CHECKING
 
-from . import AbstractEnumMeta, AbstractInstruction, AbstractMachine
+from . import (
+    AbstractEnumMeta,
+    AbstractInstruction,
+    AbstractMachine,
+    ExecutionError,
+    InvalidInstructionError,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Mapping, Sequence
@@ -34,9 +40,8 @@ class MemoryContext(Enum):
         if self is MemoryContext.LOKAL:
             address += reference_pointer
         if address <= 0:
-            raise ValueError(
-                f"address {address} references outside the runtime stack (reference pointer: {reference_pointer})"
-            )
+            msg = f"address {address} references outside the runtime stack (reference pointer: {reference_pointer})"
+            raise ValueError(msg)
         return address
 
 
@@ -74,23 +79,46 @@ class Instruction(AbstractInstruction[tuple["Instruction", MemoryContext, int]],
 
     @classmethod
     def parse(cls, line: str) -> tuple[Instruction, MemoryContext, int]:
-        """parse an instance from a line like '<Name> <payload>', '<Name>' or '<Name>(context, payload)'"""
+        """
+        Parse an instance from a line like '<Name> <payload>', '<Name>' or '<Name>(context, payload)'.
+
+        Raises a InvalidInstructionError when the parsing fails.
+        """
         match = INSTRUCTION_PATTERN.fullmatch(line)
         if match is None:
-            raise KeyError("invalid instruction")
+            reason = "invalid instruction"
+            raise InvalidInstructionError(reason, line)
         name = match.group(1)
         args = match.group(3)
         arg = match.group(4)
+        try:
+            instruction = cls[name]
+        except KeyError as error:
+            reason = "invalid instruction"
+            raise InvalidInstructionError(reason, line) from error
         if args is not None:
             first, sep, last = args.partition(",")
             if sep == "":
-                return (cls[name], MemoryContext.LOKAL, int(first))
+                context = MemoryContext.LOKAL
+                payload = first
             else:
-                return (cls[name], MemoryContext[first.upper()], int(last))
+                try:
+                    context = MemoryContext[first.upper()]
+                except KeyError as error:
+                    reason = "invalid context"
+                    raise InvalidInstructionError(reason, line) from error
+                payload = last
         elif arg is not None:
-            return (cls[name], MemoryContext.LOKAL, int(arg))
+            context = MemoryContext.LOKAL
+            payload = arg
         else:
-            return (cls[name], MemoryContext.LOKAL, 0)
+            return (instruction, MemoryContext.LOKAL, 0)
+        try:
+            number_payload = int(payload)
+        except ValueError as error:
+            reason = "invalid payload"
+            raise InvalidInstructionError(reason, line) from error
+        return (instruction, context, number_payload)
 
     def is_jump(self) -> bool:
         """check if the instruction is a jump"""
@@ -173,75 +201,105 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
         )
 
     def execute_instruction(self, instruction: tuple[Instruction, MemoryContext, int]) -> int | None:
-        """execute an instruction, returning the output if produced"""
+        """
+        Execute an instruction, returning the output if produced.
+
+        Raises ExecutionError if the instruction could not be executed.
+        """
         value = None
+        opcode = instruction[0]
         match instruction:
             case (Instruction.ADD, _, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = self.stack[-2] + self.stack[-1]
                 self.stack.pop()
             case (Instruction.MUL, _, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = self.stack[-2] * self.stack[-1]
                 self.stack.pop()
             case (Instruction.SUB, _, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = self.stack[-2] - self.stack[-1]
                 self.stack.pop()
             case (Instruction.DIV, _, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = self.stack[-2] // self.stack[-1]
                 self.stack.pop()
             case (Instruction.MOD, _, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = self.stack[-2] % self.stack[-1]
                 self.stack.pop()
             case (Instruction.EQ, _, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = int(self.stack[-2] == self.stack[-1])
                 self.stack.pop()
             case (Instruction.NE, _, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = int(self.stack[-2] != self.stack[-1])
                 self.stack.pop()
             case (Instruction.LT, _, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = int(self.stack[-2] < self.stack[-1])
                 self.stack.pop()
             case (Instruction.GT, _, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = int(self.stack[-2] > self.stack[-1])
                 self.stack.pop()
             case (Instruction.LE, _, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = int(self.stack[-2] <= self.stack[-1])
                 self.stack.pop()
             case (Instruction.GE, _, _):
+                self._assert_stack(2, opcode)
                 self.stack[-2] = int(self.stack[-2] >= self.stack[-1])
                 self.stack.pop()
             case (Instruction.LOAD, context, address):
-                index = context.resolve_address(address, self.reference_pointer) - 1
-                self.stack.append(self.runtime_stack[index])
+                addr = self._resolve_runtime_stack(context, address, opcode)
+                self.stack.append(self._load_runtime_stack(addr, opcode))
             case (Instruction.LOADA, context, address):
-                self.stack.append(context.resolve_address(address, self.reference_pointer))
+                addr = self._resolve_runtime_stack(context, address, opcode)
+                self.stack.append(addr)
             case (Instruction.LOADI, _, address):
-                index = MemoryContext.LOKAL.resolve_address(address, self.reference_pointer) - 1
-                self.stack.append(self.runtime_stack[self.runtime_stack[index] - 1])
+                addr = self._resolve_runtime_stack(MemoryContext.LOKAL, address, opcode)
+                addr = self._load_runtime_stack(addr, opcode)
+                self.stack.append(self._load_runtime_stack(addr, opcode))
             case (Instruction.STORE, context, address):
-                self.runtime_stack[context.resolve_address(address, self.reference_pointer) - 1] = self.stack.pop()
+                self._assert_stack(1, opcode)
+                addr = self._resolve_runtime_stack(context, address, opcode)
+                self._assert_runtime_stack(addr, opcode)
+                self.runtime_stack[addr - 1] = self.stack.pop()
             case (Instruction.STOREI, _, address):
-                index = MemoryContext.LOKAL.resolve_address(address, self.reference_pointer) - 1
-                self.runtime_stack[self.runtime_stack[index] - 1] = self.stack.pop()
+                self._assert_stack(1, opcode)
+                addr = self._resolve_runtime_stack(MemoryContext.LOKAL, address, opcode)
+                addr = self._load_runtime_stack(addr, opcode)
+                self._assert_runtime_stack(addr, opcode)
+                self.runtime_stack[addr - 1] = self.stack.pop()
             case (Instruction.LIT, _, literal):
                 self.stack.append(literal)
             case (Instruction.JMP, _, counter):
                 self.counter = counter - 1
             case (Instruction.JMC, _, counter):
+                self._assert_stack(1, opcode)
                 if self.stack.pop() == 0:
                     self.counter = counter - 1
             case (Instruction.WRITE, context, address):
-                index = context.resolve_address(address, self.reference_pointer) - 1
-                value = self.runtime_stack[index]
+                addr = self._resolve_runtime_stack(context, address, opcode)
+                value = self._load_runtime_stack(addr, opcode)
             case (Instruction.WRITEI, _, address):
-                index = MemoryContext.LOKAL.resolve_address(address, self.reference_pointer) - 1
-                value = self.runtime_stack[self.runtime_stack[index] - 1]
+                addr = self._resolve_runtime_stack(MemoryContext.LOKAL, address, opcode)
+                addr = self._load_runtime_stack(addr, opcode)
+                value = self._load_runtime_stack(addr, opcode)
             case (Instruction.READ, context, address):
-                index = context.resolve_address(address, self.reference_pointer) - 1
-                self.runtime_stack[index] = next(self.input)
+                addr = self._resolve_runtime_stack(context, address, opcode)
+                self._assert_runtime_stack(addr, opcode)
+                self.runtime_stack[addr - 1] = self._consume_input(opcode)
             case (Instruction.READI, _, address):
-                index = MemoryContext.LOKAL.resolve_address(address, self.reference_pointer) - 1
-                self.runtime_stack[self.runtime_stack[index] - 1] = next(self.input)
+                addr = self._resolve_runtime_stack(MemoryContext.LOKAL, address, opcode)
+                addr = self._load_runtime_stack(addr, opcode)
+                self._assert_runtime_stack(addr, opcode)
+                self.runtime_stack[addr - 1] = self._consume_input(opcode)
             case (Instruction.PUSH, _, _):
+                self._assert_stack(1, opcode)
                 self.runtime_stack.append(self.stack.pop())
             case (Instruction.CALL, _, counter):
                 self.runtime_stack.append(self.counter + 1)
@@ -251,16 +309,51 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
             case (Instruction.INIT, _, variables):
                 self.runtime_stack.extend(repeat(0, variables))
             case (Instruction.RET, _, parameters) if self.reference_pointer > 1:
+                self._assert_runtime_stack(self.reference_pointer - 1, opcode)
+                self._assert_runtime_stack(self.reference_pointer, opcode)
                 old_reference = self.reference_pointer
                 self.counter = self.runtime_stack[self.reference_pointer - 2] - 1
                 self.reference_pointer = self.runtime_stack[self.reference_pointer - 1]
                 del self.runtime_stack[old_reference - parameters - 2:]
             case (Instruction.RET, _, _):
-                raise LookupError("stack is too small to return")
-            case invalid:
-                raise ValueError(f"invalid instruction: '{invalid}'")
+                reason = "stack is too small to return"
+                raise ExecutionError(reason, opcode)
+            case _ as invalid:
+                raise ExecutionError("invalid instruction", invalid)    # noqa: EM101, TRY003
         self.counter += 1
         return value
+
+    def _assert_stack(self, depth: int, instruction: Instruction) -> None:
+        if len(self.stack) < depth:
+            reason = f"not enough values on the stack, {depth} required"
+            raise ExecutionError(reason, instruction)
+
+    def _assert_runtime_stack(self, address: int, instruction: Instruction) -> None:
+        if not 1 <= address <= len(self.runtime_stack):
+            reason = f"invalid memory address: {address}"
+            raise ExecutionError(reason, instruction)
+
+    def _resolve_runtime_stack(
+        self, context: MemoryContext, address: int, instruction: Instruction
+    ) -> int:
+        try:
+            return context.resolve_address(address, self.reference_pointer)
+        except ValueError as error:
+            raise ExecutionError(error.args[0], instruction) from None
+
+    def _load_runtime_stack(self, address: int, instruction: Instruction) -> int:
+        try:
+            return self.runtime_stack[address - 1]
+        except IndexError as error:
+            reason = f"invalid memory address: {address}"
+            raise ExecutionError(reason, instruction) from error
+
+    def _consume_input(self, instruction: Instruction) -> int:
+        try:
+            return next(self.input)
+        except StopIteration as error:
+            reason = "input iterator exhausted"
+            raise ExecutionError(reason, instruction) from error
 
     def reset(self) -> None:
         """reset the machine to the default state"""

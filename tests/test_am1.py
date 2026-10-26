@@ -2,6 +2,7 @@
 
 from unittest import TestCase
 
+from AMN import InvalidInstructionError
 from AMN.am1 import Instruction, Machine, MemoryContext
 
 # do not remove trailing whitespace!
@@ -78,18 +79,18 @@ GE;
 WRITE 1;
 LIT 2;
 STORE 3;
-STOREI 2;
-WRITEI 2;
-STOREI 2;
-WRITEI 2;
-STOREI 2;
-WRITEI 2;
-STOREI 2;
-WRITEI 2;
-STOREI 2;
-WRITEI 2;
-STOREI 2;
-WRITEI 2;
+STOREI 3;
+WRITEI 3;
+STOREI 3;
+WRITEI 3;
+STOREI 3;
+WRITEI 3;
+STOREI 3;
+WRITEI 3;
+STOREI 3;
+WRITEI 3;
+STOREI 3;
+WRITEI 3;
 """
 
 
@@ -110,15 +111,15 @@ class InstructionTest(TestCase):
             Instruction.parse("LOAD(lokal,-3)"),
             (Instruction.LOAD, MemoryContext.LOKAL, -3)
         )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(InvalidInstructionError):
             Instruction.parse("JMP x")
-        with self.assertRaises(KeyError):
+        with self.assertRaises(InvalidInstructionError):
             Instruction.parse("XXX")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(InvalidInstructionError):
             Instruction.parse("LOAD lokal,-3")
-        with self.assertRaises(KeyError):
+        with self.assertRaises(InvalidInstructionError):
             Instruction.parse("LOAD(xxx,-3)")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(InvalidInstructionError):
             Instruction.parse("LOAD(lokal,xxx)")
 
     def test_parse_program(self) -> None:

@@ -2,6 +2,7 @@
 
 from unittest import TestCase
 
+from AMN import InvalidInstructionError
 from AMN.am0 import Instruction, Machine
 
 # do not remove trailing whitespace!
@@ -90,9 +91,9 @@ class InstructionTest(TestCase):
             Instruction.parse("JMP 42"),
             (Instruction.JMP, 42)
         )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(InvalidInstructionError):
             Instruction.parse("JMP x")
-        with self.assertRaises(KeyError):
+        with self.assertRaises(InvalidInstructionError):
             Instruction.parse("XXX")
 
     def test_parse_program(self) -> None:

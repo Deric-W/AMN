@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 from cmd import Cmd
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
-if TYPE_CHECKING:
-    from . import AbstractInstruction, AbstractMachine
+from . import AbstractInstruction, AbstractMachine, ExecutionError, InvalidInstructionError
 
 __all__ = (
     "REPL",
@@ -36,13 +35,13 @@ class REPL(Generic[T], Cmd):
         """execute an instruction"""
         try:
             instruction = self.instruction.parse(arg)
-        except Exception as error:
-            self.stdout.write(f"Error while parsing: {error!r}\n")
+        except InvalidInstructionError as error:
+            self.stdout.write(f"Error while parsing: {error.reason}\n")
         else:
             try:
                 output = self.machine.execute_instruction(instruction)
-            except (LookupError, ValueError) as error:
-                self.stdout.write(f"Error while executing: {error!r}\n")
+            except ExecutionError as error:
+                self.stdout.write(f"Error while executing: {error.reason}\n")
             else:
                 if output is not None:
                     self.stdout.write(f"Output: {output}\n")
