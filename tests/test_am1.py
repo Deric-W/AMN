@@ -42,7 +42,7 @@ PUSH;
 CALL 4;
 WRITE(global,2);
 RET 0; 
-"""
+"""  # noqa: W291, W293
 
 EXAMPLE_PROGRAM2 = \
 """

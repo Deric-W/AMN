@@ -27,7 +27,7 @@ __all__ = (
 
 T_co = TypeVar("T_co", covariant=True)
 T = TypeVar("T")
-I = TypeVar("I")
+I = TypeVar("I")  # noqa: E741
 
 
 class InvalidInstructionError(ValueError):
@@ -127,7 +127,7 @@ class AbstractMachine(Generic[I], metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def default(cls: type[T], input: Iterator[int]) -> T:
+    def default(cls: type[T], input: Iterator[int]) -> T:  # noqa: A002
         """create an instance in the default state"""
         raise NotImplementedError
 
@@ -136,7 +136,7 @@ class AbstractMachine(Generic[I], metaclass=ABCMeta):
         return {"Counter: ": self.counter}
 
     @abstractmethod
-    def state(self, input: Iterable[int], output: Iterable[int]) -> str:
+    def state(self, input: Iterable[int], output: Iterable[int]) -> str:  # noqa: A002
         """create a string representation of the current machine state"""
         raise NotImplementedError
 

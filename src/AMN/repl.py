@@ -14,7 +14,7 @@ __all__ = (
 T = TypeVar("T")
 
 
-class REPL(Generic[T], Cmd):
+class REPL(Cmd, Generic[T]):
     """interactive REPL"""
 
     instruction: type[AbstractInstruction[T]]
@@ -67,7 +67,7 @@ class REPL(Generic[T], Cmd):
         """print an error"""
         self.stdout.write(f"*** Unknown command: {line}\n")
 
-    def do_EOF(self, arg: str) -> bool:
+    def do_EOF(self, arg: str) -> bool:  # noqa: N802
         """exit the repl"""
         return self.do_exit(arg)
 

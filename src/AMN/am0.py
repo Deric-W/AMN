@@ -69,11 +69,11 @@ class Instruction(AbstractInstruction[tuple["Instruction", int]], Enum, metaclas
 
     def is_jump(self) -> bool:
         """check if the instruction is a jump"""
-        return 14 < self.value < 17
+        return Instruction.JMP.value <= self.value <= Instruction.JMC.value
 
     def has_payload(self) -> bool:
         """check if the instruction uses its payload"""
-        return self.value > 11
+        return self.value >= Instruction.LOAD.value
 
 
 class Machine(AbstractMachine[tuple[Instruction, int]]):
@@ -87,14 +87,14 @@ class Machine(AbstractMachine[tuple[Instruction, int]]):
 
     input: Iterator[int]
 
-    def __init__(self, counter: int, stack: list[int], memory: dict[int, int], input: Iterator[int]) -> None:
+    def __init__(self, counter: int, stack: list[int], memory: dict[int, int], input: Iterator[int]) -> None:  # noqa: A002
         self.counter = counter
         self.stack = stack
         self.memory = memory
         self.input = input
 
     @classmethod
-    def default(cls, input: Iterator[int]) -> Machine:
+    def default(cls, input: Iterator[int]) -> Machine:  # noqa: A002
         """create an instance with default values"""
         return cls(1, [], {}, input)
 
@@ -107,7 +107,7 @@ class Machine(AbstractMachine[tuple[Instruction, int]]):
             "Memory": memory
         }
 
-    def state(self, input: Iterable[int], output: Iterable[int]) -> str:
+    def state(self, input: Iterable[int], output: Iterable[int]) -> str:  # noqa: A002
         """create a string representation of the current machine state"""
         memory = ", ".join(f"{key}/{value}" for key, value in self.memory.items())
         return (

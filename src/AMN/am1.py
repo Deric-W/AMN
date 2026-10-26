@@ -126,7 +126,7 @@ class Instruction(AbstractInstruction[tuple["Instruction", MemoryContext, int]],
 
     def has_payload(self) -> bool:
         """check if the instruction uses its payload"""
-        return self.value > 11 and self is not Instruction.PUSH
+        return self.value >= Instruction.LOAD.value and self is not Instruction.PUSH
 
     def has_context(self) -> bool:
         """check if the instruction has a context"""
@@ -152,7 +152,7 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
 
     input: Iterator[int]
 
-    def __init__(self, counter: int, stack: list[int], runtime_stack: list[int], reference_pointer: int, input: Iterator[int]) -> None:
+    def __init__(self, counter: int, stack: list[int], runtime_stack: list[int], reference_pointer: int, input: Iterator[int]) -> None:  # noqa: A002
         self.counter = counter
         self.stack = stack
         self.runtime_stack = runtime_stack
@@ -160,7 +160,7 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
         self.input = input
 
     @classmethod
-    def default(cls, input: Iterator[int]) -> Machine:
+    def default(cls, input: Iterator[int]) -> Machine:  # noqa: A002
         """create an instance with default values"""
         return cls(1, [], [], 0, input)
 
@@ -186,10 +186,10 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
         while reference > 0:
             yield self.runtime_stack[reference - 2:previous_reference - 2]
             previous_reference, reference = reference, self.runtime_stack[reference - 1]
-        if previous_reference > 2:
+        if previous_reference > 2:  # noqa: PLR2004
             yield self.runtime_stack[:previous_reference - 2]
 
-    def state(self, input: Iterable[int], output: Iterable[int]) -> str:
+    def state(self, input: Iterable[int], output: Iterable[int]) -> str:  # noqa: A002
         """create a string representation of the current machine state"""
         return (
             f"({self.counter}, "

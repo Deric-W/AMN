@@ -30,8 +30,8 @@ MACHINES: dict[str, tuple[type[AbstractInstruction[Any]], type[AbstractMachine[A
 def main() -> int:
     """CLI entry point"""
     args = ARGUMENT_PARSER.parse_args()
-    Instruction, Machine = MACHINES[args.instructions.upper()]
-    return cast(int, args.main(Instruction, Machine, args))
+    instruction, machine = MACHINES[args.instructions.upper()]
+    return cast("int", args.main(instruction, machine, args))
 
 
 def main_repl(instruction: type[AbstractInstruction[T]], machine: type[AbstractMachine[T]], args: Namespace) -> int:
@@ -47,7 +47,7 @@ def main_exec(instruction: type[AbstractInstruction[T]], machine: type[AbstractM
     _machine = machine.default(map(int, map(input, repeat("Input: "))))
     for value in _machine.execute_program(program):
         if value is not None:
-            print(f"Output: {value}")
+            print(f"Output: {value}")  # noqa: T201
     if args.interactive:
         repl = REPL(instruction, _machine)
         repl.cmdloop(f"Welcome the the {args.instructions.upper()} REPL, type 'help' for help")

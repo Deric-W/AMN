@@ -31,7 +31,7 @@ ADD;
 STORE 1;
 JMP 6;
 WRITE 3;
-"""
+"""  # noqa: W291, W293
 
 EXAMPLE_PROGRAM2 = \
 """
