@@ -79,7 +79,7 @@ class Instruction(AbstractInstruction[tuple["Instruction", int]], Enum, metaclas
 class Machine(AbstractMachine[tuple[Instruction, int]]):
     """machine for executing AM0 instructions"""
 
-    __slots__ = ("stack", "memory", "input")
+    __slots__ = ("input", "memory", "stack")
 
     stack: list[int]
 

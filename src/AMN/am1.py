@@ -142,7 +142,7 @@ class Instruction(AbstractInstruction[tuple["Instruction", MemoryContext, int]],
 class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
     """machine for executing AM0 instructions"""
 
-    __slots__ = ("stack", "runtime_stack", "reference_pointer", "input")
+    __slots__ = ("input", "reference_pointer", "runtime_stack", "stack")
 
     stack: list[int]
 
