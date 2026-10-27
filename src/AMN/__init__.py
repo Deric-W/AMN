@@ -6,10 +6,11 @@ from abc import ABCMeta, abstractmethod
 from enum import EnumMeta
 from typing import TYPE_CHECKING, Final, Generic, TypeVar
 
+from ._version import version as __version__  # noqa: F401
+
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Mapping, Sequence
 
-__version__ = "0.6.1"
 __author__ = "Eric Niklas Wolf"
 __email__ = "eric_niklas.wolf@mailbox.tu-dresden.de"
 __all__ = (

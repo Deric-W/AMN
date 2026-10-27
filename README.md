@@ -1,7 +1,7 @@
 # AMN
 
 [![Hatch project](https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg)](https://github.com/pypa/hatch)
-![Tests](https://github.com/Deric-W/AMN/actions/workflows/Tests.yaml/badge.svg)
+![Tests](https://github.com/Deric-W/AMN/actions/workflows/Test.yaml/badge.svg)
 [![codecov](https://codecov.io/gh/Deric-W/AMN/branch/main/graph/badge.svg?token=SU3982mC17)](https://codecov.io/gh/Deric-W/AMN)
 
 The AMN package implements a simple virtual machine for the AM0 and AM1 instructions sets.
