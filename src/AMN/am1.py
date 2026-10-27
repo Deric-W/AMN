@@ -5,25 +5,26 @@ from __future__ import annotations
 import re
 from enum import Enum, unique
 from itertools import repeat
-from typing import TYPE_CHECKING, Self, assert_never
+from typing import TYPE_CHECKING, Final, Self, assert_never, final
 
 from . import (
-    AbstractEnumMeta,
     AbstractInstruction,
     AbstractMachine,
     ExecutionError,
     InvalidInstructionError,
+    _AbstractEnumMeta,
 )
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Mapping, Sequence
 
 
-__all__ = ("Instruction", "Machine", "MemoryContext")
+__all__: Final = ("Instruction", "Machine", "MemoryContext")
 
-INSTRUCTION_PATTERN = re.compile(r"([A-Z]{2,6})(\((.*)\)|( .*))?")
+_INSTRUCTION_PATTERN: Final = re.compile(r"([A-Z]{2,6})(\((.*)\)|( .*))?")
 
 
+@final
 @unique
 class MemoryContext(Enum):
     """Context relative to which an index should be loaded"""
@@ -41,9 +42,10 @@ class MemoryContext(Enum):
         return address
 
 
+@final
 @unique
 class Instruction(
-    AbstractInstruction[tuple["Instruction", MemoryContext, int]], Enum, metaclass=AbstractEnumMeta
+    AbstractInstruction[tuple["Instruction", MemoryContext, int]], Enum, metaclass=_AbstractEnumMeta
 ):
     """AM1 instruction"""
 
@@ -82,7 +84,7 @@ class Instruction(
 
         Raises a InvalidInstructionError when the parsing fails.
         """
-        match = INSTRUCTION_PATTERN.fullmatch(line)
+        match = _INSTRUCTION_PATTERN.fullmatch(line)
         if match is None:
             reason = "invalid instruction"
             raise InvalidInstructionError(reason, line)
@@ -137,6 +139,7 @@ class Instruction(
         )
 
 
+@final
 class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
     """machine for executing AM0 instructions"""
 
