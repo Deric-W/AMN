@@ -1,6 +1,5 @@
 [project]
 name = "AMN"
-version = "0.6.1"
 description = "Virtual machines for the AMN instructions sets"
 requires-python = ">=3.10"
 keywords = [
@@ -18,6 +17,7 @@ classifiers = [
     "Topic :: Utilities",
     "Typing :: Typed"
 ]
+dynamic = ["version"]
 
 [project.readme]
 file = "README.md"
@@ -35,8 +35,14 @@ Bugtracker = "https://github.com/Deric-W/AMN/issues"
 amn = "AMN.main:main"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/AMN/_version.py"
 
 [tool.hatch.envs.default]
 installer = "pip"
