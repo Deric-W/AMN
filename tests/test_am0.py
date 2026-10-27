@@ -1,14 +1,14 @@
-#!/usr/bin/python3
-
 """AM0 Tests"""
 
+import itertools
 from unittest import TestCase
-from AMN.am0 import Machine, Instruction
 
+from AMN import ExecutionError, InvalidInstructionError
+from AMN.am0 import Instruction, Machine
 
 # do not remove trailing whitespace!
-EXAMPLE_PROGRAM1 = \
-"""
+# fmt: off
+EXAMPLE_PROGRAM1 = """
 READ 2;  
 LIT 1;
 STORE 1;
@@ -32,10 +32,10 @@ ADD;
 STORE 1;
 JMP 6;
 WRITE 3;
-"""
+"""  # noqa: W291, W293
+# fmt: on
 
-EXAMPLE_PROGRAM2 = \
-"""
+EXAMPLE_PROGRAM2 = """
 READ 1;
 LOAD 1;
 LIT 7;
@@ -78,23 +78,45 @@ STORE 2;
 WRITE 2;
 """
 
+REQUIRES_ONE_STACK = """
+STORE 0;
+JMC 0;
+"""
+
+REQUIRES_TWO_STACK = """
+ADD;
+MUL;
+SUB;
+DIV;
+MOD;
+EQ;
+NE;
+LT;
+GT;
+LE;
+GE;
+"""
+
+REQUIRES_MEMORY = """
+WRITE 0;
+LOAD 0;
+"""
+
+REQUIRES_INPUT = """
+READ 0;
+"""
+
 
 class InstructionTest(TestCase):
     """AM0 instruction tests"""
 
     def test_parse(self) -> None:
         """test instruction parsing"""
-        self.assertEqual(
-            Instruction.parse("ADD"),
-            (Instruction.ADD, 0)
-        )
-        self.assertEqual(
-            Instruction.parse("JMP 42"),
-            (Instruction.JMP, 42)
-        )
-        with self.assertRaises(ValueError):
+        self.assertEqual(Instruction.parse("ADD"), (Instruction.ADD, 0))
+        self.assertEqual(Instruction.parse("JMP 42"), (Instruction.JMP, 42))
+        with self.assertRaises(InvalidInstructionError):
             Instruction.parse("JMP x")
-        with self.assertRaises(KeyError):
+        with self.assertRaises(InvalidInstructionError):
             Instruction.parse("XXX")
 
     def test_parse_program(self) -> None:
@@ -122,8 +144,8 @@ class InstructionTest(TestCase):
                 (Instruction.ADD, 0),
                 (Instruction.STORE, 1),
                 (Instruction.JMP, 6),
-                (Instruction.WRITE, 3)
-            ]
+                (Instruction.WRITE, 3),
+            ],
         )
         self.assertEqual(list(Instruction.parse_program("")), [])
         with self.assertRaises(ValueError):
@@ -142,26 +164,23 @@ class InstructionTest(TestCase):
             Instruction.JMP,
             Instruction.JMC,
             Instruction.READ,
-            Instruction.WRITE
+            Instruction.WRITE,
         }
         for instruction in Instruction:
             self.assertEqual(
                 instruction.has_payload(),
                 instruction in has_payload,
-                f"invalid payload data for {instruction}"
+                f"invalid payload data for {instruction}",
             )
 
     def test_is_jump(self) -> None:
         """test jump information"""
-        is_jump = {
-            Instruction.JMP,
-            Instruction.JMC
-        }
+        is_jump = {Instruction.JMP, Instruction.JMC}
         for instruction in Instruction:
             self.assertEqual(
                 instruction.is_jump(),
                 instruction in is_jump,
-                f"invalid jump data for {instruction}"
+                f"invalid jump data for {instruction}",
             )
 
 
@@ -187,10 +206,7 @@ class MachineTest(TestCase):
 
     def test_status(self) -> None:
         """test status information"""
-        machines = [
-            Machine.default(iter([])),
-            Machine(42, [1, 2], {3: 4, 5: 6}, iter(range(9)))
-        ]
+        machines = [Machine.default(iter([])), Machine(42, [1, 2], {3: 4, 5: 6}, iter(range(9)))]
         for machine in machines:
             status = machine.status()
             self.assertIn("Counter", status)
@@ -199,13 +215,10 @@ class MachineTest(TestCase):
 
     def test_state(self) -> None:
         """test state representation"""
-        self.assertEqual(
-            Machine.default(iter(range(3))).state([], []),
-            "(1, ε, [], ε, ε)"
-        )
+        self.assertEqual(Machine.default(iter(range(3))).state([], []), "(1, ε, [], ε, ε)")
         self.assertEqual(
             Machine(42, [1, 2], {3: 4, 5: 6}, iter(range(9))).state(range(1, 3), range(2)),
-            "(42, 2 : 1, [3/4, 5/6], 1 : 2, 0 : 1)"
+            "(42, 2 : 1, [3/4, 5/6], 1 : 2, 0 : 1)",
         )
 
     def test_execute(self) -> None:
@@ -213,12 +226,28 @@ class MachineTest(TestCase):
         program1 = tuple(Instruction.parse_program(EXAMPLE_PROGRAM1))
         program2 = tuple(Instruction.parse_program(EXAMPLE_PROGRAM2))
         machine = Machine.default(iter([2, 42]))
-        self.assertEqual(
-            list(machine.execute_program(program1)),
-            [None] * 39 + [5]
-        )
+        self.assertEqual(list(machine.execute_program(program1)), [None] * 39 + [5])
         self.assertEqual(
             list(filter(lambda value: value is not None, machine.execute_program(program2))),
-            [1, 1, 1, 1, 0, 1, 0]
+            [1, 1, 1, 1, 0, 1, 0],
         )
         self.assertIsNone(next(machine.input, None))
+
+    def test_errors(self) -> None:
+        """test handling of execution errors"""
+        requires_memory = Instruction.parse_program(REQUIRES_MEMORY)
+        requires_one_stack = Instruction.parse_program(REQUIRES_ONE_STACK)
+        requires_two_stack = Instruction.parse_program(REQUIRES_TWO_STACK)
+        requires_input = Instruction.parse_program(REQUIRES_INPUT)
+        machine = Machine.default(iter((1,)))
+        for instruction in requires_one_stack:
+            with self.assertRaises(ExecutionError):
+                machine.execute_instruction(instruction)
+        machine.execute_instruction((Instruction.LIT, 42))
+        for instruction in itertools.chain(requires_two_stack, requires_memory):
+            with self.assertRaises(ExecutionError):
+                machine.execute_instruction(instruction)
+        next(machine.input)
+        for instruction in requires_input:
+            with self.assertRaises(ExecutionError):
+                machine.execute_instruction(instruction)

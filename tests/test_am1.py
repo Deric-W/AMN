@@ -1,14 +1,14 @@
-#!/usr/bin/python3
-
 """AM1 Tests"""
 
+import itertools
 from unittest import TestCase
+
+from AMN import ExecutionError, InvalidInstructionError
 from AMN.am1 import Instruction, Machine, MemoryContext
 
-
 # do not remove trailing whitespace!
-EXAMPLE_PROGRAM1 = \
-"""
+# fmt: off
+EXAMPLE_PROGRAM1 = """
 INIT 2;
 CALL 24;
 JMP 0;
@@ -43,10 +43,10 @@ PUSH;
 CALL 4;
 WRITE(global,2);
 RET 0; 
-"""
+"""  # noqa: W291, W293
+# fmt: on
 
-EXAMPLE_PROGRAM2 = \
-"""
+EXAMPLE_PROGRAM2 = """
 INIT 3;
 LIT 1;
 STORE 3;
@@ -80,18 +80,71 @@ GE;
 WRITE 1;
 LIT 2;
 STORE 3;
-STOREI 2;
-WRITEI 2;
-STOREI 2;
-WRITEI 2;
-STOREI 2;
-WRITEI 2;
-STOREI 2;
-WRITEI 2;
-STOREI 2;
-WRITEI 2;
-STOREI 2;
-WRITEI 2;
+STOREI 3;
+WRITEI 3;
+STOREI 3;
+WRITEI 3;
+STOREI 3;
+WRITEI 3;
+STOREI 3;
+WRITEI 3;
+STOREI 3;
+WRITEI 3;
+STOREI 3;
+WRITEI 3;
+"""
+
+INVALID_ADDRESS = """
+LOAD(lokal,0);
+LOADA(lokal,0);
+LOADI(lokal,0);
+STORE(lokal,0);
+STOREI 0;
+WRITE(lokal,0);
+WRITEI 0;
+READ(lokal,0);
+READI 0;
+"""
+
+REQUIRES_RUNTIME_STACK = """
+LOAD(global,1);
+STORE(global,1);
+WRITE(global,1);
+READ(global,1);
+RET;
+"""
+
+REQUIRES_INDIRECT_RUNTIME_STACK = """
+LOADI(global,1);
+STOREI 1;
+WRITEI 1;
+READI 1;
+"""
+
+REQUIRES_ONE_STACK = """
+STORE(global,1);
+STOREI 1;
+JMC 0;
+PUSH;
+"""
+
+REQUIRES_TWO_STACK = """
+ADD;
+MUL;
+SUB;
+DIV;
+MOD;
+EQ;
+NE;
+LT;
+GT;
+LE;
+GE;
+"""
+
+REQUIRES_INPUT = """
+READ(global,1);
+READI 1;
 """
 
 
@@ -100,27 +153,20 @@ class InstructionTest(TestCase):
 
     def test_parse(self) -> None:
         """test instruction parsing"""
+        self.assertEqual(Instruction.parse("ADD"), (Instruction.ADD, MemoryContext.LOKAL, 0))
+        self.assertEqual(Instruction.parse("JMP 42"), (Instruction.JMP, MemoryContext.LOKAL, 42))
         self.assertEqual(
-            Instruction.parse("ADD"),
-            (Instruction.ADD, MemoryContext.LOKAL, 0)
+            Instruction.parse("LOAD(lokal,-3)"), (Instruction.LOAD, MemoryContext.LOKAL, -3)
         )
-        self.assertEqual(
-            Instruction.parse("JMP 42"),
-            (Instruction.JMP, MemoryContext.LOKAL, 42)
-        )
-        self.assertEqual(
-            Instruction.parse("LOAD(lokal,-3)"),
-            (Instruction.LOAD, MemoryContext.LOKAL, -3)
-        )
-        with self.assertRaises(ValueError):
+        with self.assertRaises(InvalidInstructionError):
             Instruction.parse("JMP x")
-        with self.assertRaises(KeyError):
+        with self.assertRaises(InvalidInstructionError):
             Instruction.parse("XXX")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(InvalidInstructionError):
             Instruction.parse("LOAD lokal,-3")
-        with self.assertRaises(KeyError):
+        with self.assertRaises(InvalidInstructionError):
             Instruction.parse("LOAD(xxx,-3)")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(InvalidInstructionError):
             Instruction.parse("LOAD(lokal,xxx)")
 
     def test_parse_program(self) -> None:
@@ -159,8 +205,8 @@ class InstructionTest(TestCase):
                 (Instruction.PUSH, MemoryContext.LOKAL, 0),
                 (Instruction.CALL, MemoryContext.LOKAL, 4),
                 (Instruction.WRITE, MemoryContext.GLOBAL, 2),
-                (Instruction.RET, MemoryContext.LOKAL, 0)
-            ]
+                (Instruction.RET, MemoryContext.LOKAL, 0),
+            ],
         )
         self.assertEqual(list(Instruction.parse_program("")), [])
         with self.assertRaises(ValueError):
@@ -187,28 +233,23 @@ class InstructionTest(TestCase):
             Instruction.WRITEI,
             Instruction.CALL,
             Instruction.RET,
-            Instruction.INIT
+            Instruction.INIT,
         }
         for instruction in Instruction:
             self.assertEqual(
                 instruction.has_payload(),
                 instruction in has_payload,
-                f"invalid payload data for {instruction}"
+                f"invalid payload data for {instruction}",
             )
 
     def test_is_jump(self) -> None:
         """test jump information"""
-        is_jump = {
-            Instruction.JMP,
-            Instruction.JMC,
-            Instruction.CALL,
-            Instruction.RET
-        }
+        is_jump = {Instruction.JMP, Instruction.JMC, Instruction.CALL, Instruction.RET}
         for instruction in Instruction:
             self.assertEqual(
                 instruction.is_jump(),
                 instruction in is_jump,
-                f"invalid jump data for {instruction}"
+                f"invalid jump data for {instruction}",
             )
 
     def test_has_context(self) -> None:
@@ -218,13 +259,13 @@ class InstructionTest(TestCase):
             Instruction.LOADA,
             Instruction.STORE,
             Instruction.READ,
-            Instruction.WRITE
+            Instruction.WRITE,
         }
         for instruction in Instruction:
             self.assertEqual(
                 instruction.has_context(),
                 instruction in has_context,
-                f"invalid context data for {instruction}"
+                f"invalid context data for {instruction}",
             )
 
 
@@ -252,10 +293,7 @@ class MachineTest(TestCase):
 
     def test_status(self) -> None:
         """test status information"""
-        machines = [
-            Machine.default(iter([])),
-            Machine(42, [1, 2], [4, 6], 2, iter(range(9)))
-        ]
+        machines = [Machine.default(iter([])), Machine(42, [1, 2], [4, 6], 2, iter(range(9)))]
         for machine in machines:
             status = machine.status()
             self.assertIn("Counter", status)
@@ -265,13 +303,10 @@ class MachineTest(TestCase):
 
     def test_state(self) -> None:
         """test state representation"""
-        self.assertEqual(
-            Machine.default(iter(range(3))).state([], []),
-            "(1, ε, ε, 0, ε, ε)"
-        )
+        self.assertEqual(Machine.default(iter(range(3))).state([], []), "(1, ε, ε, 0, ε, ε)")
         self.assertEqual(
             Machine(42, [1, 2], [4, 6], 2, iter(range(9))).state(range(1, 3), range(2)),
-            "(42, 2 : 1, 4 : 6, 2, 1 : 2, 0 : 1)"
+            "(42, 2 : 1, 4 : 6, 2, 1 : 2, 0 : 1)",
         )
 
     def test_execute(self) -> None:
@@ -279,37 +314,50 @@ class MachineTest(TestCase):
         program1 = tuple(Instruction.parse_program(EXAMPLE_PROGRAM1))
         program2 = tuple(Instruction.parse_program(EXAMPLE_PROGRAM2))
         machine = Machine.default(iter([1, 42]))
-        self.assertEqual(
-            list(machine.execute_program(program1)),
-            [None] * 35 + [2, None, None]
-        )
+        self.assertEqual(list(machine.execute_program(program1)), [None] * 35 + [2, None, None])
         machine.reset()
         self.assertEqual(
             list(filter(lambda value: value is not None, machine.execute_program(program2))),
-            [1, 1, 1, 1, 0, 1, 0]
+            [1, 1, 1, 1, 0, 1, 0],
         )
         self.assertIsNone(next(machine.input, None))
 
     def test_frames(self) -> None:
         """test frame detection"""
         machine = Machine(42, [1, 2], [4, 6, 2, 0, 3, 4, 42, 4, 99], 8, iter([]))
-        self.assertEqual(
-            list(machine.frames()),
-            [
-                [42, 4, 99],
-                [2, 0, 3, 4],
-                [4, 6]
-            ]
-        )
+        self.assertEqual(list(machine.frames()), [[42, 4, 99], [2, 0, 3, 4], [4, 6]])
         machine = Machine(42, [1, 2], [2, 0, 3, 4, 42, 2, 99], 6, iter([]))
-        self.assertEqual(
-            list(machine.frames()),
-            [
-                [42, 2, 99],
-                [2, 0, 3, 4]
-            ]
-        )
-        self.assertEqual(
-            list(Machine.default(iter([])).frames()),
-            []
-        )
+        self.assertEqual(list(machine.frames()), [[42, 2, 99], [2, 0, 3, 4]])
+        self.assertEqual(list(Machine.default(iter([])).frames()), [])
+
+    def test_errors(self) -> None:
+        """test handling of execution errors"""
+        invalid_address = Instruction.parse_program(INVALID_ADDRESS)
+        requires_runtime_stack = Instruction.parse_program(REQUIRES_RUNTIME_STACK)
+        requires_one_stack = Instruction.parse_program(REQUIRES_ONE_STACK)
+        requires_two_stack = Instruction.parse_program(REQUIRES_TWO_STACK)
+        requires_input = Instruction.parse_program(REQUIRES_INPUT)
+        requires_indirect = Instruction.parse_program(REQUIRES_INDIRECT_RUNTIME_STACK)
+        machine = Machine.default(iter((1,)))
+        for instruction in requires_one_stack:
+            with self.assertRaises(ExecutionError):
+                machine.execute_instruction(instruction)
+        machine.execute_instruction((Instruction.LIT, MemoryContext.LOKAL, 42))
+        for instruction in requires_two_stack:
+            with self.assertRaises(ExecutionError):
+                machine.execute_instruction(instruction)
+        machine.execute_instruction((Instruction.LIT, MemoryContext.LOKAL, 43))
+        for instruction in itertools.chain(
+            requires_runtime_stack, requires_indirect, invalid_address
+        ):
+            with self.assertRaises(ExecutionError):
+                machine.execute_instruction(instruction)
+        machine.execute_instruction((Instruction.LIT, MemoryContext.LOKAL, 24))
+        machine.execute_instruction((Instruction.PUSH, MemoryContext.GLOBAL, 0))
+        for instruction in requires_indirect:
+            with self.assertRaises(ExecutionError):
+                machine.execute_instruction(instruction)
+        next(machine.input)
+        for instruction in requires_input:
+            with self.assertRaises(ExecutionError):
+                machine.execute_instruction(instruction)

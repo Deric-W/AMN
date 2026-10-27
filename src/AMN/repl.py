@@ -1,27 +1,31 @@
-#!/usr/bin/python3
-
 """AMN REPL"""
 
 from __future__ import annotations
-from cmd import Cmd
-from typing import Type, TypeVar, Generic, Any
-from . import AbstractInstruction, AbstractMachine
 
-__all__ = (
-    "REPL",
-)
+from cmd import Cmd
+from typing import Any, Generic, TypeVar
+
+from . import AbstractInstruction, AbstractMachine, ExecutionError, InvalidInstructionError
+
+__all__ = ("REPL",)
 
 T = TypeVar("T")
 
 
-class REPL(Generic[T], Cmd):
+class REPL(Cmd, Generic[T]):
     """interactive REPL"""
 
-    instruction: Type[AbstractInstruction[T]]
+    instruction: type[AbstractInstruction[T]]
 
     machine: AbstractMachine[T]
 
-    def __init__(self, instruction: Type[AbstractInstruction[T]], machine: AbstractMachine[T], *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        instruction: type[AbstractInstruction[T]],
+        machine: AbstractMachine[T],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.instruction = instruction
         self.machine = machine
@@ -35,13 +39,13 @@ class REPL(Generic[T], Cmd):
         """execute an instruction"""
         try:
             instruction = self.instruction.parse(arg)
-        except Exception as error:
-            self.stdout.write(f"Error while parsing: {error!r}\n")
+        except InvalidInstructionError as error:
+            self.stdout.write(f"Error while parsing: {error.reason}\n")
         else:
             try:
                 output = self.machine.execute_instruction(instruction)
-            except (LookupError, ValueError) as error:
-                self.stdout.write(f"Error while executing: {error!r}\n")
+            except ExecutionError as error:
+                self.stdout.write(f"Error while executing: {error.reason}\n")
             else:
                 if output is not None:
                     self.stdout.write(f"Output: {output}\n")
@@ -67,7 +71,7 @@ class REPL(Generic[T], Cmd):
         """print an error"""
         self.stdout.write(f"*** Unknown command: {line}\n")
 
-    def do_EOF(self, arg: str) -> bool:
+    def do_EOF(self, arg: str) -> bool:  # noqa: N802
         """exit the repl"""
         return self.do_exit(arg)
 

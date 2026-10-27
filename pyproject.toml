@@ -38,29 +38,34 @@ amn = "AMN.main:main"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.envs.default]
+installer = "pip"
+
 [tool.hatch.envs.hatch-test]
 installer = "pip"
 
 [[tool.hatch.envs.hatch-test.matrix]]
 python = ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
-[tool.hatch.envs.lint]
-dependencies = [
-    "mypy >= 1.0.0",
-    "pylint >= 2.12.2",
-    "flake8 >= 5.0.0",
-    "isort >= 5.10.1"
+[tool.hatch.envs.hatch-check-fmt]
+installer = "pip"
+config-path = ".ruff_defaults.toml"
+
+[tool.hatch.envs.hatch-check-code]
+installer = "pip"
+config-path = ".ruff_defaults.toml"
+
+[tool.hatch.envs.hatch-check-types]
+installer = "pip"
+# do not override inherited test dependencies
+extra-dependencies = [
+    "mypy ~= 2.4"
 ]
 
-[tool.hatch.envs.lint.scripts]
-lint = [
-    "- flake8 src/AMN",
-    "- pylint src/AMN"
-]
-typecheck = "mypy -p AMN"
-release = [
-    "typecheck"
-]
+[tool.hatch.envs.hatch-check-types.scripts]
+check = "mypy -p AMN --cache-dir \"{root}/.mypy_cache\" --pretty {args}"
+check-summarize = "mypy -p AMN --cache-dir \"{root}/.mypy_cache\" {args}"
+coverage = "mypy -p AMN --cache-dir \"{root}/.mypy_cache\" --linecoverage-report \"{root}/.mypy_reports\" {args}"
 
 [tool.hatch.build.targets.sdist]
 exclude = ["/.github"]
@@ -76,8 +81,23 @@ warn_unused_ignores = true
 warn_return_any = true
 warn_unreachable = true
 
-[tool.pylint]
-max-line-length = 100
+[tool.ruff]
+extend = ".ruff_defaults.toml"
+line-length = 100
+
+[tool.ruff.lint]
+ignore = [
+    "TID252"    # relative imports
+]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"src/AMN/*" = [
+    "N999"      # invalid module name
+]
+"tests/*" = [
+    "PT009",    # unittest-style assert
+    "PT027"     # unittest-style assertRaises
+]
 
 [tool.coverage.run]
 source_pkgs = ["AMN"]
