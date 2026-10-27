@@ -3,24 +3,27 @@
 from __future__ import annotations
 
 from enum import Enum, unique
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final, Self, assert_never, final
 
 from . import (
-    AbstractEnumMeta,
     AbstractInstruction,
     AbstractMachine,
     ExecutionError,
     InvalidInstructionError,
+    _AbstractEnumMeta,
 )
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Mapping
 
-__all__ = ("Instruction", "Machine")
+__all__: Final = ("Instruction", "Machine")
 
 
+@final
 @unique
-class Instruction(AbstractInstruction[tuple["Instruction", int]], Enum, metaclass=AbstractEnumMeta):
+class Instruction(
+    AbstractInstruction[tuple["Instruction", int]], Enum, metaclass=_AbstractEnumMeta
+):
     """AM0 instruction"""
 
     ADD = 1
@@ -73,6 +76,7 @@ class Instruction(AbstractInstruction[tuple["Instruction", int]], Enum, metaclas
         return self.value >= Instruction.LOAD.value
 
 
+@final
 class Machine(AbstractMachine[tuple[Instruction, int]]):
     """machine for executing AM0 instructions"""
 
@@ -97,7 +101,7 @@ class Machine(AbstractMachine[tuple[Instruction, int]]):
         self.input = input
 
     @classmethod
-    def default(cls, input: Iterator[int]) -> Machine:  # noqa: A002
+    def default(cls, input: Iterator[int]) -> Self:  # noqa: A002
         """create an instance with default values"""
         return cls(1, [], {}, input)
 
@@ -188,7 +192,7 @@ class Machine(AbstractMachine[tuple[Instruction, int]]):
             case (Instruction.READ, address):
                 self.memory[address] = self._consume_input(opcode)
             case _ as invalid:
-                raise ExecutionError("invalid instruction", invalid)  # noqa: EM101, TRY003
+                assert_never(invalid)
         self.counter += 1
         return value
 

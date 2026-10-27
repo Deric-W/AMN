@@ -1,23 +1,29 @@
 """CLI commands"""
 
+from __future__ import annotations
+
 import sys
 from argparse import ArgumentParser, FileType, Namespace
 from itertools import repeat
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Final, TypeVar, cast
 
-from . import AbstractInstruction, AbstractMachine, __version__
+from . import AbstractInstruction, AbstractMachine
 from . import __doc__ as _doc
+from . import __version__ as _version
 from .am0 import Instruction as AM0Instruction
 from .am0 import Machine as AM0Machine
 from .am1 import Instruction as AM1Instruction
 from .am1 import Machine as AM1Machine
 from .repl import REPL
 
-__all__ = ("ARGUMENT_PARSER", "MACHINES", "main")
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+__all__: Final = ("ARGUMENT_PARSER", "MACHINES", "main")
 
 T = TypeVar("T")
 
-MACHINES: dict[str, tuple[type[AbstractInstruction[Any]], type[AbstractMachine[Any]]]] = {
+MACHINES: Final[Mapping[str, tuple[type[AbstractInstruction[Any]], type[AbstractMachine[Any]]]]] = {
     "AM0": (AM0Instruction, AM0Machine),
     "AM1": (AM1Instruction, AM1Machine),
 }
@@ -70,8 +76,8 @@ def main_trace(
     return 0
 
 
-ARGUMENT_PARSER = ArgumentParser(description=_doc)
-ARGUMENT_PARSER.add_argument("-v", "--version", action="version", version=f"%(prog)s {__version__}")
+ARGUMENT_PARSER: Final = ArgumentParser(description=_doc)
+ARGUMENT_PARSER.add_argument("-v", "--version", action="version", version=f"%(prog)s {_version}")
 ARGUMENT_PARSER.add_argument(
     "-i",
     "--instructions",
@@ -80,12 +86,14 @@ ARGUMENT_PARSER.add_argument(
     help=f"Instruction set to use, possible selections: {', '.join(MACHINES.keys())}",
 )
 
-SUBCOMMANDS = ARGUMENT_PARSER.add_subparsers(required=True)
+SUBCOMMANDS: Final = ARGUMENT_PARSER.add_subparsers(required=True)
 
-REPL_PARSER = SUBCOMMANDS.add_parser("repl", help="start the REPL (read evaluate print loop)")
+REPL_PARSER: Final = SUBCOMMANDS.add_parser(
+    "repl", help="start the REPL (read evaluate print loop)"
+)
 REPL_PARSER.set_defaults(main=main_repl)
 
-EXEC_PARSER = SUBCOMMANDS.add_parser("exec", help="execute a program")
+EXEC_PARSER: Final = SUBCOMMANDS.add_parser("exec", help="execute a program")
 EXEC_PARSER.add_argument(
     "file",
     nargs="?",
@@ -98,7 +106,7 @@ EXEC_PARSER.add_argument(
 )
 EXEC_PARSER.set_defaults(main=main_exec)
 
-TRACE_PARSER = SUBCOMMANDS.add_parser("trace", help="trace the execution of a program")
+TRACE_PARSER: Final = SUBCOMMANDS.add_parser("trace", help="trace the execution of a program")
 TRACE_PARSER.add_argument(
     "--input", nargs="*", type=int, default=[], help="input values for the program"
 )

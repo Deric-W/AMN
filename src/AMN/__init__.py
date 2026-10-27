@@ -4,17 +4,17 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from enum import EnumMeta
-from typing import TYPE_CHECKING, Final, Generic, TypeVar
+from typing import TYPE_CHECKING, Final, Generic, Self, TypeVar
 
-from ._version import version as __version__  # noqa: F401
+from . import _version
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Mapping, Sequence
 
-__author__ = "Eric Niklas Wolf"
-__email__ = "eric_niklas.wolf@mailbox.tu-dresden.de"
-__all__ = (
-    "AbstractEnumMeta",
+__version__: Final = _version.version
+__author__: Final = "Eric Niklas Wolf"
+__email__: Final = "eric_niklas.wolf@mailbox.tu-dresden.de"
+__all__: Final = (
     "AbstractInstruction",
     "AbstractMachine",
     "ExecutionError",
@@ -27,8 +27,7 @@ __all__ = (
 )
 
 T_co = TypeVar("T_co", covariant=True)
-T = TypeVar("T")
-I = TypeVar("I")  # noqa: E741
+I_contra = TypeVar("I_contra", contravariant=True)
 
 
 class InvalidInstructionError(ValueError):
@@ -65,8 +64,8 @@ class InvalidProgramError(ValueError):
         self.line_number = line_number
 
 
-class AbstractEnumMeta(EnumMeta, ABCMeta):
-    """Workaround to create enum extends an abc"""
+class _AbstractEnumMeta(EnumMeta, ABCMeta):
+    """Workaround to create an enum extending an abc"""
 
 
 class AbstractInstruction(Generic[T_co], metaclass=ABCMeta):
@@ -117,7 +116,7 @@ class ExecutionError(Exception):
         self.instruction = instruction
 
 
-class AbstractMachine(Generic[I], metaclass=ABCMeta):
+class AbstractMachine(Generic[I_contra], metaclass=ABCMeta):
     """Abstract virtual machine for instructions"""
 
     __slots__ = ("counter",)
@@ -126,7 +125,7 @@ class AbstractMachine(Generic[I], metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def default(cls: type[T], input: Iterator[int]) -> T:  # noqa: A002
+    def default(cls, input: Iterator[int]) -> Self:  # noqa: A002
         """create an instance in the default state"""
         raise NotImplementedError
 
@@ -140,7 +139,7 @@ class AbstractMachine(Generic[I], metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def execute_instruction(self, instruction: I) -> int | None:
+    def execute_instruction(self, instruction: I_contra) -> int | None:
         """
         Execute an instruction, returning the output if produced.
 
@@ -148,7 +147,7 @@ class AbstractMachine(Generic[I], metaclass=ABCMeta):
         """
         raise NotImplementedError
 
-    def execute_program(self, program: Sequence[I]) -> Iterator[int | None]:
+    def execute_program(self, program: Sequence[I_contra]) -> Iterator[int | None]:
         """
         Execute a program, yielding after every instruction.
 
@@ -156,7 +155,12 @@ class AbstractMachine(Generic[I], metaclass=ABCMeta):
         """
         self.counter = 1
         while 0 < self.counter <= len(program):
-            yield self.execute_instruction(program[self.counter - 1])
+            try:
+                output = self.execute_instruction(program[self.counter - 1])
+            except ExecutionError as error:
+                error.add_note(f"Instruction Counter: {self.counter}")
+                raise
+            yield output
 
     @abstractmethod
     def reset(self) -> None:

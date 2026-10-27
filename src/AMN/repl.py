@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from cmd import Cmd
-from typing import Any, Generic, TypeVar
+from typing import Any, Final, Generic, TypeVar
 
 from . import AbstractInstruction, AbstractMachine, ExecutionError, InvalidInstructionError
 
-__all__ = ("REPL",)
+__all__: Final = ("REPL",)
 
 T = TypeVar("T")
 
