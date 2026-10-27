@@ -25,10 +25,7 @@ class ReplTest(TestCase):
         self.stdin = StringIO()
         self.stdout = StringIO()
         self.repl = REPL(
-            Instruction,
-            Machine.default(self.lazy_input()),
-            stdin=self.stdin,
-            stdout=self.stdout
+            Instruction, Machine.default(self.lazy_input()), stdin=self.stdin, stdout=self.stdout
         )
         self.repl.use_rawinput = False
 
@@ -56,10 +53,7 @@ class ReplTest(TestCase):
         """Test the empty line"""
         self.set_stdin("\n")
         self.repl.cmdloop()
-        self.assertEqual(
-            self.stdout.getvalue(),
-            f"{self.repl.prompt * 2}Exiting REPL...\n"
-        )
+        self.assertEqual(self.stdout.getvalue(), f"{self.repl.prompt * 2}Exiting REPL...\n")
 
     def test_exec(self) -> None:
         """Test the exec command"""
@@ -71,7 +65,7 @@ class ReplTest(TestCase):
                 f"{self.repl.prompt}Error while parsing: invalid instruction\n"
                 f"{self.repl.prompt}Error while executing: not enough values on the stack, 2 required\n"
                 f"{self.repl.prompt}Exiting REPL...\n"
-            )
+            ),
         )
         self.set_stdin("exec READ 1\nexec WRITE 1\n")
         self.input.appendleft(3)
@@ -79,10 +73,7 @@ class ReplTest(TestCase):
         self.repl.cmdloop()
         self.assertEqual(
             self.stdout.getvalue(),
-            (
-                f"{self.repl.prompt * 2}Output: 3\n"
-                f"{self.repl.prompt}Exiting REPL...\n"
-            )
+            (f"{self.repl.prompt * 2}Output: 3\n{self.repl.prompt}Exiting REPL...\n"),
         )
         self.assertEqual(self.repl.machine.counter, 3)
 
@@ -90,10 +81,7 @@ class ReplTest(TestCase):
         """Test the reset command"""
         self.set_stdin("exec LIT 3\nreset\n")
         self.repl.cmdloop()
-        self.assertEqual(
-            self.stdout.getvalue(),
-            f"{self.repl.prompt * 3}Exiting REPL...\n"
-        )
+        self.assertEqual(self.stdout.getvalue(), f"{self.repl.prompt * 3}Exiting REPL...\n")
         self.assertEqual(self.repl.machine.counter, 1)
 
     def test_status(self) -> None:
@@ -103,7 +91,7 @@ class ReplTest(TestCase):
         status = "".join(f"{key}: {value}\n" for key, value in self.repl.machine.status().items())
         self.assertEqual(
             self.stdout.getvalue(),
-            f"{self.repl.prompt * 2}{status}{self.repl.prompt}Exiting REPL...\n"
+            f"{self.repl.prompt * 2}{status}{self.repl.prompt}Exiting REPL...\n",
         )
 
     def test_state(self) -> None:
@@ -112,8 +100,5 @@ class ReplTest(TestCase):
         self.repl.cmdloop()
         self.assertEqual(
             self.stdout.getvalue(),
-            (
-                f"{self.repl.prompt * 4}(4, 0, [], ε, ε)\n"
-                f"{self.repl.prompt}Exiting REPL...\n"
-            )
+            (f"{self.repl.prompt * 4}(4, 0, [], ε, ε)\n{self.repl.prompt}Exiting REPL...\n"),
         )

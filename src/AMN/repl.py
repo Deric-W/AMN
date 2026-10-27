@@ -7,9 +7,7 @@ from typing import Any, Generic, TypeVar
 
 from . import AbstractInstruction, AbstractMachine, ExecutionError, InvalidInstructionError
 
-__all__ = (
-    "REPL",
-)
+__all__ = ("REPL",)
 
 T = TypeVar("T")
 
@@ -21,7 +19,13 @@ class REPL(Cmd, Generic[T]):
 
     machine: AbstractMachine[T]
 
-    def __init__(self, instruction: type[AbstractInstruction[T]], machine: AbstractMachine[T], *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        instruction: type[AbstractInstruction[T]],
+        machine: AbstractMachine[T],
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.instruction = instruction
         self.machine = machine

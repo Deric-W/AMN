@@ -10,8 +10,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Mapping, Sequence
 
 __version__ = "0.6.1"
-__author__  = "Eric Niklas Wolf"
-__email__   = "eric_niklas.wolf@mailbox.tu-dresden.de"
+__author__ = "Eric Niklas Wolf"
+__email__ = "eric_niklas.wolf@mailbox.tu-dresden.de"
 __all__ = (
     "AbstractEnumMeta",
     "AbstractInstruction",
@@ -22,7 +22,7 @@ __all__ = (
     "am0",
     "am1",
     "main",
-    "repl"
+    "repl",
 )
 
 T_co = TypeVar("T_co", covariant=True)
@@ -58,9 +58,7 @@ class InvalidProgramError(ValueError):
     """The number of the line which caused the error."""
 
     def __init__(self, reason: str, line: str, line_number: int) -> None:
-        super().__init__(
-            f"error while parsing program at line {line_number} ('{line}'): {reason}"
-        )
+        super().__init__(f"error while parsing program at line {line_number} ('{line}'): {reason}")
         self.reason = reason
         self.line = line
         self.line_number = line_number

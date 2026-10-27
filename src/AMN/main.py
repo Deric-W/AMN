@@ -13,17 +13,13 @@ from .am1 import Instruction as AM1Instruction
 from .am1 import Machine as AM1Machine
 from .repl import REPL
 
-__all__ = (
-    "ARGUMENT_PARSER",
-    "MACHINES",
-    "main"
-)
+__all__ = ("ARGUMENT_PARSER", "MACHINES", "main")
 
 T = TypeVar("T")
 
 MACHINES: dict[str, tuple[type[AbstractInstruction[Any]], type[AbstractMachine[Any]]]] = {
     "AM0": (AM0Instruction, AM0Machine),
-    "AM1": (AM1Instruction, AM1Machine)
+    "AM1": (AM1Instruction, AM1Machine),
 }
 
 
@@ -34,14 +30,18 @@ def main() -> int:
     return cast("int", args.main(instruction, machine, args))
 
 
-def main_repl(instruction: type[AbstractInstruction[T]], machine: type[AbstractMachine[T]], args: Namespace) -> int:
+def main_repl(
+    instruction: type[AbstractInstruction[T]], machine: type[AbstractMachine[T]], args: Namespace
+) -> int:
     """entry point for the repl subcommand"""
     repl = REPL(instruction, machine.default(map(int, map(input, repeat("Input: ")))))
     repl.cmdloop(f"Welcome the the {args.instructions.upper()} REPL, type 'help' for help")
     return 0
 
 
-def main_exec(instruction: type[AbstractInstruction[T]], machine: type[AbstractMachine[T]], args: Namespace) -> int:
+def main_exec(
+    instruction: type[AbstractInstruction[T]], machine: type[AbstractMachine[T]], args: Namespace
+) -> int:
     """entry point for the exec subcommand"""
     program = tuple(instruction.parse_program(args.file.read()))
     _machine = machine.default(map(int, map(input, repeat("Input: "))))
@@ -54,7 +54,9 @@ def main_exec(instruction: type[AbstractInstruction[T]], machine: type[AbstractM
     return 0
 
 
-def main_trace(instruction: type[AbstractInstruction[T]], machine: type[AbstractMachine[T]], args: Namespace) -> int:
+def main_trace(
+    instruction: type[AbstractInstruction[T]], machine: type[AbstractMachine[T]], args: Namespace
+) -> int:
     """entry point for the trace subcommand"""
     program = tuple(instruction.parse_program(args.file.read()))
     output: list[int] = []
@@ -69,18 +71,13 @@ def main_trace(instruction: type[AbstractInstruction[T]], machine: type[Abstract
 
 
 ARGUMENT_PARSER = ArgumentParser(description=_doc)
-ARGUMENT_PARSER.add_argument(
-    "-v",
-    "--version",
-    action="version",
-    version=f"%(prog)s {__version__}"
-)
+ARGUMENT_PARSER.add_argument("-v", "--version", action="version", version=f"%(prog)s {__version__}")
 ARGUMENT_PARSER.add_argument(
     "-i",
     "--instructions",
     type=str,
     default="AM0",
-    help=f"Instruction set to use, possible selections: {', '.join(MACHINES.keys())}"
+    help=f"Instruction set to use, possible selections: {', '.join(MACHINES.keys())}",
 )
 
 SUBCOMMANDS = ARGUMENT_PARSER.add_subparsers(required=True)
@@ -94,29 +91,22 @@ EXEC_PARSER.add_argument(
     nargs="?",
     type=FileType("r"),
     default=sys.stdin,
-    help="file to read instructions from (omit for stdin)"
+    help="file to read instructions from (omit for stdin)",
 )
 EXEC_PARSER.add_argument(
-    "-i",
-    "--interactive",
-    action="store_true",
-    help="open the REPL after executing the program"
+    "-i", "--interactive", action="store_true", help="open the REPL after executing the program"
 )
 EXEC_PARSER.set_defaults(main=main_exec)
 
 TRACE_PARSER = SUBCOMMANDS.add_parser("trace", help="trace the execution of a program")
 TRACE_PARSER.add_argument(
-    "--input",
-    nargs="*",
-    type=int,
-    default=[],
-    help="input values for the program"
+    "--input", nargs="*", type=int, default=[], help="input values for the program"
 )
 TRACE_PARSER.add_argument(
     "file",
     nargs="?",
     type=FileType("r"),
     default=sys.stdin,
-    help="file to read instructions from (omit for stdin)"
+    help="file to read instructions from (omit for stdin)",
 )
 TRACE_PARSER.set_defaults(main=main_trace)

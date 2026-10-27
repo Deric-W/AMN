@@ -19,11 +19,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Mapping, Sequence
 
 
-__all__ = (
-    "Instruction",
-    "Machine",
-    "MemoryContext"
-)
+__all__ = ("Instruction", "Machine", "MemoryContext")
 
 INSTRUCTION_PATTERN = re.compile(r"([A-Z]{2,6})(\((.*)\)|( .*))?")
 
@@ -33,7 +29,7 @@ class MemoryContext(Enum):
     """Context relative to which an index should be loaded"""
 
     GLOBAL = 0
-    LOKAL  = 1
+    LOKAL = 1
 
     def resolve_address(self, address: int, reference_pointer: int) -> int:
         """resolve an relative address to a absolute one"""
@@ -46,36 +42,38 @@ class MemoryContext(Enum):
 
 
 @unique
-class Instruction(AbstractInstruction[tuple["Instruction", MemoryContext, int]], Enum, metaclass=AbstractEnumMeta):
+class Instruction(
+    AbstractInstruction[tuple["Instruction", MemoryContext, int]], Enum, metaclass=AbstractEnumMeta
+):
     """AM1 instruction"""
 
-    ADD    = 1
-    MUL    = 2
-    SUB    = 3
-    DIV    = 4
-    MOD    = 5
-    EQ     = 6
-    NE     = 7
-    LT     = 8
-    GT     = 9
-    LE     = 10
-    GE     = 11
-    LOAD   = 12
-    LOADA  = 13
-    LOADI  = 14
-    STORE  = 15
+    ADD = 1
+    MUL = 2
+    SUB = 3
+    DIV = 4
+    MOD = 5
+    EQ = 6
+    NE = 7
+    LT = 8
+    GT = 9
+    LE = 10
+    GE = 11
+    LOAD = 12
+    LOADA = 13
+    LOADI = 14
+    STORE = 15
     STOREI = 16
-    LIT    = 17
-    JMP    = 18
-    JMC    = 19
-    WRITE  = 20
+    LIT = 17
+    JMP = 18
+    JMC = 19
+    WRITE = 20
     WRITEI = 21
-    READ   = 22
-    READI  = 23
-    PUSH   = 24
-    CALL   = 25
-    INIT   = 26
-    RET    = 27
+    READ = 22
+    READI = 23
+    PUSH = 24
+    CALL = 25
+    INIT = 26
+    RET = 27
 
     @classmethod
     def parse(cls, line: str) -> tuple[Instruction, MemoryContext, int]:
@@ -135,7 +133,7 @@ class Instruction(AbstractInstruction[tuple["Instruction", MemoryContext, int]],
             Instruction.LOADA,
             Instruction.STORE,
             Instruction.READ,
-            Instruction.WRITE
+            Instruction.WRITE,
         )
 
 
@@ -152,7 +150,14 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
 
     input: Iterator[int]
 
-    def __init__(self, counter: int, stack: list[int], runtime_stack: list[int], reference_pointer: int, input: Iterator[int]) -> None:  # noqa: A002
+    def __init__(
+        self,
+        counter: int,
+        stack: list[int],
+        runtime_stack: list[int],
+        reference_pointer: int,
+        input: Iterator[int],  # noqa: A002
+    ) -> None:
         self.counter = counter
         self.stack = stack
         self.runtime_stack = runtime_stack
@@ -173,7 +178,7 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
             "Counter": self.counter,
             "Stack": self.stack,
             "Runtime Stack": memory,
-            "Reference Pointer": self.reference_pointer
+            "Reference Pointer": self.reference_pointer,
         }
 
     def frames(self) -> Iterator[Sequence[int]]:
@@ -184,10 +189,10 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
         previous_reference = len(self.runtime_stack) + 2
         reference = self.reference_pointer
         while reference > 0:
-            yield self.runtime_stack[reference - 2:previous_reference - 2]
+            yield self.runtime_stack[reference - 2 : previous_reference - 2]
             previous_reference, reference = reference, self.runtime_stack[reference - 1]
         if previous_reference > 2:  # noqa: PLR2004
-            yield self.runtime_stack[:previous_reference - 2]
+            yield self.runtime_stack[: previous_reference - 2]
 
     def state(self, input: Iterable[int], output: Iterable[int]) -> str:  # noqa: A002
         """create a string representation of the current machine state"""
@@ -200,7 +205,9 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
             f"{' : '.join(map(str, output)):ε<1})"
         )
 
-    def execute_instruction(self, instruction: tuple[Instruction, MemoryContext, int]) -> int | None:
+    def execute_instruction(
+        self, instruction: tuple[Instruction, MemoryContext, int]
+    ) -> int | None:
         """
         Execute an instruction, returning the output if produced.
 
@@ -314,12 +321,12 @@ class Machine(AbstractMachine[tuple[Instruction, MemoryContext, int]]):
                 old_reference = self.reference_pointer
                 self.counter = self.runtime_stack[self.reference_pointer - 2] - 1
                 self.reference_pointer = self.runtime_stack[self.reference_pointer - 1]
-                del self.runtime_stack[old_reference - parameters - 2:]
+                del self.runtime_stack[old_reference - parameters - 2 :]
             case (Instruction.RET, _, _):
                 reason = "stack is too small to return"
                 raise ExecutionError(reason, opcode)
             case _ as invalid:
-                raise ExecutionError("invalid instruction", invalid)    # noqa: EM101, TRY003
+                raise ExecutionError("invalid instruction", invalid)  # noqa: EM101, TRY003
         self.counter += 1
         return value
 

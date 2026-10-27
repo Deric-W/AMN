@@ -16,34 +16,31 @@ from . import (
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Mapping
 
-__all__ = (
-    "Instruction",
-    "Machine"
-)
+__all__ = ("Instruction", "Machine")
 
 
 @unique
 class Instruction(AbstractInstruction[tuple["Instruction", int]], Enum, metaclass=AbstractEnumMeta):
     """AM0 instruction"""
 
-    ADD   = 1
-    MUL   = 2
-    SUB   = 3
-    DIV   = 4
-    MOD   = 5
-    EQ    = 6
-    NE    = 7
-    LT    = 8
-    GT    = 9
-    LE    = 10
-    GE    = 11
-    LOAD  = 12
+    ADD = 1
+    MUL = 2
+    SUB = 3
+    DIV = 4
+    MOD = 5
+    EQ = 6
+    NE = 7
+    LT = 8
+    GT = 9
+    LE = 10
+    GE = 11
+    LOAD = 12
     STORE = 13
-    LIT   = 14
-    JMP   = 15
-    JMC   = 16
+    LIT = 14
+    JMP = 15
+    JMC = 16
     WRITE = 17
-    READ  = 18
+    READ = 18
 
     @classmethod
     def parse(cls, line: str) -> tuple[Instruction, int]:
@@ -87,7 +84,13 @@ class Machine(AbstractMachine[tuple[Instruction, int]]):
 
     input: Iterator[int]
 
-    def __init__(self, counter: int, stack: list[int], memory: dict[int, int], input: Iterator[int]) -> None:  # noqa: A002
+    def __init__(
+        self,
+        counter: int,
+        stack: list[int],
+        memory: dict[int, int],
+        input: Iterator[int],  # noqa: A002
+    ) -> None:
         self.counter = counter
         self.stack = stack
         self.memory = memory
@@ -101,11 +104,7 @@ class Machine(AbstractMachine[tuple[Instruction, int]]):
     def status(self) -> Mapping[str, object]:
         """return an object mapping values to visualisations"""
         memory = "\n" + "\n".join(f"\t{key} := {value}" for key, value in self.memory.items())
-        return {
-            "Counter": self.counter,
-            "Stack": self.stack,
-            "Memory": memory
-        }
+        return {"Counter": self.counter, "Stack": self.stack, "Memory": memory}
 
     def state(self, input: Iterable[int], output: Iterable[int]) -> str:  # noqa: A002
         """create a string representation of the current machine state"""
@@ -189,7 +188,7 @@ class Machine(AbstractMachine[tuple[Instruction, int]]):
             case (Instruction.READ, address):
                 self.memory[address] = self._consume_input(opcode)
             case _ as invalid:
-                raise ExecutionError("invalid instruction", invalid)    # noqa: EM101, TRY003
+                raise ExecutionError("invalid instruction", invalid)  # noqa: EM101, TRY003
         self.counter += 1
         return value
 

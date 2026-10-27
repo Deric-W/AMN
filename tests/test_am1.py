@@ -6,6 +6,7 @@ from AMN import InvalidInstructionError
 from AMN.am1 import Instruction, Machine, MemoryContext
 
 # do not remove trailing whitespace!
+# fmt: off
 EXAMPLE_PROGRAM1 = \
 """
 INIT 2;
@@ -43,9 +44,9 @@ CALL 4;
 WRITE(global,2);
 RET 0; 
 """  # noqa: W291, W293
+# fmt: on
 
-EXAMPLE_PROGRAM2 = \
-"""
+EXAMPLE_PROGRAM2 = """
 INIT 3;
 LIT 1;
 STORE 3;
@@ -99,17 +100,10 @@ class InstructionTest(TestCase):
 
     def test_parse(self) -> None:
         """test instruction parsing"""
+        self.assertEqual(Instruction.parse("ADD"), (Instruction.ADD, MemoryContext.LOKAL, 0))
+        self.assertEqual(Instruction.parse("JMP 42"), (Instruction.JMP, MemoryContext.LOKAL, 42))
         self.assertEqual(
-            Instruction.parse("ADD"),
-            (Instruction.ADD, MemoryContext.LOKAL, 0)
-        )
-        self.assertEqual(
-            Instruction.parse("JMP 42"),
-            (Instruction.JMP, MemoryContext.LOKAL, 42)
-        )
-        self.assertEqual(
-            Instruction.parse("LOAD(lokal,-3)"),
-            (Instruction.LOAD, MemoryContext.LOKAL, -3)
+            Instruction.parse("LOAD(lokal,-3)"), (Instruction.LOAD, MemoryContext.LOKAL, -3)
         )
         with self.assertRaises(InvalidInstructionError):
             Instruction.parse("JMP x")
@@ -158,8 +152,8 @@ class InstructionTest(TestCase):
                 (Instruction.PUSH, MemoryContext.LOKAL, 0),
                 (Instruction.CALL, MemoryContext.LOKAL, 4),
                 (Instruction.WRITE, MemoryContext.GLOBAL, 2),
-                (Instruction.RET, MemoryContext.LOKAL, 0)
-            ]
+                (Instruction.RET, MemoryContext.LOKAL, 0),
+            ],
         )
         self.assertEqual(list(Instruction.parse_program("")), [])
         with self.assertRaises(ValueError):
@@ -186,28 +180,23 @@ class InstructionTest(TestCase):
             Instruction.WRITEI,
             Instruction.CALL,
             Instruction.RET,
-            Instruction.INIT
+            Instruction.INIT,
         }
         for instruction in Instruction:
             self.assertEqual(
                 instruction.has_payload(),
                 instruction in has_payload,
-                f"invalid payload data for {instruction}"
+                f"invalid payload data for {instruction}",
             )
 
     def test_is_jump(self) -> None:
         """test jump information"""
-        is_jump = {
-            Instruction.JMP,
-            Instruction.JMC,
-            Instruction.CALL,
-            Instruction.RET
-        }
+        is_jump = {Instruction.JMP, Instruction.JMC, Instruction.CALL, Instruction.RET}
         for instruction in Instruction:
             self.assertEqual(
                 instruction.is_jump(),
                 instruction in is_jump,
-                f"invalid jump data for {instruction}"
+                f"invalid jump data for {instruction}",
             )
 
     def test_has_context(self) -> None:
@@ -217,13 +206,13 @@ class InstructionTest(TestCase):
             Instruction.LOADA,
             Instruction.STORE,
             Instruction.READ,
-            Instruction.WRITE
+            Instruction.WRITE,
         }
         for instruction in Instruction:
             self.assertEqual(
                 instruction.has_context(),
                 instruction in has_context,
-                f"invalid context data for {instruction}"
+                f"invalid context data for {instruction}",
             )
 
 
@@ -251,10 +240,7 @@ class MachineTest(TestCase):
 
     def test_status(self) -> None:
         """test status information"""
-        machines = [
-            Machine.default(iter([])),
-            Machine(42, [1, 2], [4, 6], 2, iter(range(9)))
-        ]
+        machines = [Machine.default(iter([])), Machine(42, [1, 2], [4, 6], 2, iter(range(9)))]
         for machine in machines:
             status = machine.status()
             self.assertIn("Counter", status)
@@ -264,13 +250,10 @@ class MachineTest(TestCase):
 
     def test_state(self) -> None:
         """test state representation"""
-        self.assertEqual(
-            Machine.default(iter(range(3))).state([], []),
-            "(1, ε, ε, 0, ε, ε)"
-        )
+        self.assertEqual(Machine.default(iter(range(3))).state([], []), "(1, ε, ε, 0, ε, ε)")
         self.assertEqual(
             Machine(42, [1, 2], [4, 6], 2, iter(range(9))).state(range(1, 3), range(2)),
-            "(42, 2 : 1, 4 : 6, 2, 1 : 2, 0 : 1)"
+            "(42, 2 : 1, 4 : 6, 2, 1 : 2, 0 : 1)",
         )
 
     def test_execute(self) -> None:
@@ -278,37 +261,18 @@ class MachineTest(TestCase):
         program1 = tuple(Instruction.parse_program(EXAMPLE_PROGRAM1))
         program2 = tuple(Instruction.parse_program(EXAMPLE_PROGRAM2))
         machine = Machine.default(iter([1, 42]))
-        self.assertEqual(
-            list(machine.execute_program(program1)),
-            [None] * 35 + [2, None, None]
-        )
+        self.assertEqual(list(machine.execute_program(program1)), [None] * 35 + [2, None, None])
         machine.reset()
         self.assertEqual(
             list(filter(lambda value: value is not None, machine.execute_program(program2))),
-            [1, 1, 1, 1, 0, 1, 0]
+            [1, 1, 1, 1, 0, 1, 0],
         )
         self.assertIsNone(next(machine.input, None))
 
     def test_frames(self) -> None:
         """test frame detection"""
         machine = Machine(42, [1, 2], [4, 6, 2, 0, 3, 4, 42, 4, 99], 8, iter([]))
-        self.assertEqual(
-            list(machine.frames()),
-            [
-                [42, 4, 99],
-                [2, 0, 3, 4],
-                [4, 6]
-            ]
-        )
+        self.assertEqual(list(machine.frames()), [[42, 4, 99], [2, 0, 3, 4], [4, 6]])
         machine = Machine(42, [1, 2], [2, 0, 3, 4, 42, 2, 99], 6, iter([]))
-        self.assertEqual(
-            list(machine.frames()),
-            [
-                [42, 2, 99],
-                [2, 0, 3, 4]
-            ]
-        )
-        self.assertEqual(
-            list(Machine.default(iter([])).frames()),
-            []
-        )
+        self.assertEqual(list(machine.frames()), [[42, 2, 99], [2, 0, 3, 4]])
+        self.assertEqual(list(Machine.default(iter([])).frames()), [])

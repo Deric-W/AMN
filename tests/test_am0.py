@@ -6,6 +6,7 @@ from AMN import InvalidInstructionError
 from AMN.am0 import Instruction, Machine
 
 # do not remove trailing whitespace!
+# fmt: off
 EXAMPLE_PROGRAM1 = \
 """
 READ 2;  
@@ -32,9 +33,9 @@ STORE 1;
 JMP 6;
 WRITE 3;
 """  # noqa: W291, W293
+# fmt: on
 
-EXAMPLE_PROGRAM2 = \
-"""
+EXAMPLE_PROGRAM2 = """
 READ 1;
 LOAD 1;
 LIT 7;
@@ -83,14 +84,8 @@ class InstructionTest(TestCase):
 
     def test_parse(self) -> None:
         """test instruction parsing"""
-        self.assertEqual(
-            Instruction.parse("ADD"),
-            (Instruction.ADD, 0)
-        )
-        self.assertEqual(
-            Instruction.parse("JMP 42"),
-            (Instruction.JMP, 42)
-        )
+        self.assertEqual(Instruction.parse("ADD"), (Instruction.ADD, 0))
+        self.assertEqual(Instruction.parse("JMP 42"), (Instruction.JMP, 42))
         with self.assertRaises(InvalidInstructionError):
             Instruction.parse("JMP x")
         with self.assertRaises(InvalidInstructionError):
@@ -121,8 +116,8 @@ class InstructionTest(TestCase):
                 (Instruction.ADD, 0),
                 (Instruction.STORE, 1),
                 (Instruction.JMP, 6),
-                (Instruction.WRITE, 3)
-            ]
+                (Instruction.WRITE, 3),
+            ],
         )
         self.assertEqual(list(Instruction.parse_program("")), [])
         with self.assertRaises(ValueError):
@@ -141,26 +136,23 @@ class InstructionTest(TestCase):
             Instruction.JMP,
             Instruction.JMC,
             Instruction.READ,
-            Instruction.WRITE
+            Instruction.WRITE,
         }
         for instruction in Instruction:
             self.assertEqual(
                 instruction.has_payload(),
                 instruction in has_payload,
-                f"invalid payload data for {instruction}"
+                f"invalid payload data for {instruction}",
             )
 
     def test_is_jump(self) -> None:
         """test jump information"""
-        is_jump = {
-            Instruction.JMP,
-            Instruction.JMC
-        }
+        is_jump = {Instruction.JMP, Instruction.JMC}
         for instruction in Instruction:
             self.assertEqual(
                 instruction.is_jump(),
                 instruction in is_jump,
-                f"invalid jump data for {instruction}"
+                f"invalid jump data for {instruction}",
             )
 
 
@@ -186,10 +178,7 @@ class MachineTest(TestCase):
 
     def test_status(self) -> None:
         """test status information"""
-        machines = [
-            Machine.default(iter([])),
-            Machine(42, [1, 2], {3: 4, 5: 6}, iter(range(9)))
-        ]
+        machines = [Machine.default(iter([])), Machine(42, [1, 2], {3: 4, 5: 6}, iter(range(9)))]
         for machine in machines:
             status = machine.status()
             self.assertIn("Counter", status)
@@ -198,13 +187,10 @@ class MachineTest(TestCase):
 
     def test_state(self) -> None:
         """test state representation"""
-        self.assertEqual(
-            Machine.default(iter(range(3))).state([], []),
-            "(1, ε, [], ε, ε)"
-        )
+        self.assertEqual(Machine.default(iter(range(3))).state([], []), "(1, ε, [], ε, ε)")
         self.assertEqual(
             Machine(42, [1, 2], {3: 4, 5: 6}, iter(range(9))).state(range(1, 3), range(2)),
-            "(42, 2 : 1, [3/4, 5/6], 1 : 2, 0 : 1)"
+            "(42, 2 : 1, [3/4, 5/6], 1 : 2, 0 : 1)",
         )
 
     def test_execute(self) -> None:
@@ -212,12 +198,9 @@ class MachineTest(TestCase):
         program1 = tuple(Instruction.parse_program(EXAMPLE_PROGRAM1))
         program2 = tuple(Instruction.parse_program(EXAMPLE_PROGRAM2))
         machine = Machine.default(iter([2, 42]))
-        self.assertEqual(
-            list(machine.execute_program(program1)),
-            [None] * 39 + [5]
-        )
+        self.assertEqual(list(machine.execute_program(program1)), [None] * 39 + [5])
         self.assertEqual(
             list(filter(lambda value: value is not None, machine.execute_program(program2))),
-            [1, 1, 1, 1, 0, 1, 0]
+            [1, 1, 1, 1, 0, 1, 0],
         )
         self.assertIsNone(next(machine.input, None))
