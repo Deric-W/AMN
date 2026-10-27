@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import sys
 from argparse import ArgumentParser, FileType, Namespace
-from itertools import repeat
 from typing import TYPE_CHECKING, Any, Final, TypeVar, cast
 
 from . import AbstractInstruction, AbstractMachine
@@ -17,7 +16,7 @@ from .am1 import Machine as AM1Machine
 from .repl import REPL
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Iterator, Mapping, MutableSequence
 
 __all__: Final = ("ARGUMENT_PARSER", "MACHINES", "main")
 
@@ -27,6 +26,25 @@ MACHINES: Final[Mapping[str, tuple[type[AbstractInstruction[Any]], type[Abstract
     "AM0": (AM0Instruction, AM0Machine),
     "AM1": (AM1Instruction, AM1Machine),
 }
+
+
+def _stdin_input(prompt: str = "Input: ") -> Iterator[int]:
+    while True:
+        try:
+            value = input(prompt)
+        except EOFError:
+            break
+        try:
+            number = int(value)
+        except ValueError as error:
+            print(f"Error while reading input: {error}")  # noqa: T201
+        else:
+            yield number
+
+
+def _sequence_input(sequence: MutableSequence[int]) -> Iterator[int]:
+    while len(sequence) > 0:
+        yield sequence.pop()
 
 
 def main() -> int:
@@ -40,7 +58,7 @@ def main_repl(
     instruction: type[AbstractInstruction[T]], machine: type[AbstractMachine[T]], args: Namespace
 ) -> int:
     """entry point for the repl subcommand"""
-    repl = REPL(instruction, machine.default(map(int, map(input, repeat("Input: ")))))
+    repl = REPL(instruction, machine.default(_stdin_input()))
     repl.cmdloop(f"Welcome the the {args.instructions.upper()} REPL, type 'help' for help")
     return 0
 
@@ -50,7 +68,7 @@ def main_exec(
 ) -> int:
     """entry point for the exec subcommand"""
     program = tuple(instruction.parse_program(args.file.read()))
-    _machine = machine.default(map(int, map(input, repeat("Input: "))))
+    _machine = machine.default(_stdin_input())
     for value in _machine.execute_program(program):
         if value is not None:
             print(f"Output: {value}")  # noqa: T201
@@ -67,7 +85,7 @@ def main_trace(
     program = tuple(instruction.parse_program(args.file.read()))
     output: list[int] = []
     args.input.reverse()
-    _machine = machine.default(args.input.pop() for _ in reversed(args.input))
+    _machine = machine.default(_sequence_input(args.input))
     sys.stderr.write(f"{_machine.state(reversed(args.input), output)}\n")
     for value in _machine.execute_program(program):
         if value is not None:
