@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
 from enum import EnumMeta
-from typing import TYPE_CHECKING, Final, Generic, TypeVar
+from typing import TYPE_CHECKING, Final, Generic, Self, TypeVar
 
 from ._version import version as __version__  # noqa: F401
 
@@ -27,7 +27,6 @@ __all__ = (
 )
 
 T_co = TypeVar("T_co", covariant=True)
-T = TypeVar("T")
 I = TypeVar("I")  # noqa: E741
 
 
@@ -126,7 +125,7 @@ class AbstractMachine(Generic[I], metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def default(cls: type[T], input: Iterator[int]) -> T:  # noqa: A002
+    def default(cls, input: Iterator[int]) -> Self:  # noqa: A002
         """create an instance in the default state"""
         raise NotImplementedError
 
@@ -156,7 +155,12 @@ class AbstractMachine(Generic[I], metaclass=ABCMeta):
         """
         self.counter = 1
         while 0 < self.counter <= len(program):
-            yield self.execute_instruction(program[self.counter - 1])
+            try:
+                output = self.execute_instruction(program[self.counter - 1])
+            except ExecutionError as error:
+                error.add_note(f"Instruction Counter: {self.counter}")
+                raise
+            yield output
 
     @abstractmethod
     def reset(self) -> None:

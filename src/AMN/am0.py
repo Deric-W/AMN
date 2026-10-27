@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum, unique
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self, assert_never
 
 from . import (
     AbstractEnumMeta,
@@ -97,7 +97,7 @@ class Machine(AbstractMachine[tuple[Instruction, int]]):
         self.input = input
 
     @classmethod
-    def default(cls, input: Iterator[int]) -> Machine:  # noqa: A002
+    def default(cls, input: Iterator[int]) -> Self:  # noqa: A002
         """create an instance with default values"""
         return cls(1, [], {}, input)
 
@@ -188,7 +188,7 @@ class Machine(AbstractMachine[tuple[Instruction, int]]):
             case (Instruction.READ, address):
                 self.memory[address] = self._consume_input(opcode)
             case _ as invalid:
-                raise ExecutionError("invalid instruction", invalid)  # noqa: EM101, TRY003
+                assert_never(invalid)
         self.counter += 1
         return value
 

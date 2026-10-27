@@ -12,7 +12,7 @@ If you want an interactive console just use `python3 -m AMN -i <instruction set>
 
 ## Requirements
 
-Python >= 3.10 is required to use the utility.
+Python >= 3.11 is required to use the utility.
 
 ## Installation
 

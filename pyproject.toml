@@ -1,7 +1,7 @@
 [project]
 name = "AMN"
 description = "Virtual machines for the AMN instructions sets"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 keywords = [
     "AM0",
     "AM1",
@@ -51,7 +51,7 @@ installer = "pip"
 installer = "pip"
 
 [[tool.hatch.envs.hatch-test.matrix]]
-python = ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
+python = ["3.11", "3.12", "3.13", "3.14", "3.15"]
 
 [tool.hatch.envs.hatch-check-fmt]
 installer = "pip"
