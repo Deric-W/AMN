@@ -1,14 +1,14 @@
 """AM0 Tests"""
 
+import itertools
 from unittest import TestCase
 
-from AMN import InvalidInstructionError
+from AMN import ExecutionError, InvalidInstructionError
 from AMN.am0 import Instruction, Machine
 
 # do not remove trailing whitespace!
 # fmt: off
-EXAMPLE_PROGRAM1 = \
-"""
+EXAMPLE_PROGRAM1 = """
 READ 2;  
 LIT 1;
 STORE 1;
@@ -76,6 +76,34 @@ STORE 2;
 WRITE 2;
 STORE 2;
 WRITE 2;
+"""
+
+REQUIRES_ONE_STACK = """
+STORE 0;
+JMC 0;
+"""
+
+REQUIRES_TWO_STACK = """
+ADD;
+MUL;
+SUB;
+DIV;
+MOD;
+EQ;
+NE;
+LT;
+GT;
+LE;
+GE;
+"""
+
+REQUIRES_MEMORY = """
+WRITE 0;
+LOAD 0;
+"""
+
+REQUIRES_INPUT = """
+READ 0;
 """
 
 
@@ -204,3 +232,22 @@ class MachineTest(TestCase):
             [1, 1, 1, 1, 0, 1, 0],
         )
         self.assertIsNone(next(machine.input, None))
+
+    def test_errors(self) -> None:
+        """test handling of execution errors"""
+        requires_memory = Instruction.parse_program(REQUIRES_MEMORY)
+        requires_one_stack = Instruction.parse_program(REQUIRES_ONE_STACK)
+        requires_two_stack = Instruction.parse_program(REQUIRES_TWO_STACK)
+        requires_input = Instruction.parse_program(REQUIRES_INPUT)
+        machine = Machine.default(iter((1,)))
+        for instruction in requires_one_stack:
+            with self.assertRaises(ExecutionError):
+                machine.execute_instruction(instruction)
+        machine.execute_instruction((Instruction.LIT, 42))
+        for instruction in itertools.chain(requires_two_stack, requires_memory):
+            with self.assertRaises(ExecutionError):
+                machine.execute_instruction(instruction)
+        next(machine.input)
+        for instruction in requires_input:
+            with self.assertRaises(ExecutionError):
+                machine.execute_instruction(instruction)

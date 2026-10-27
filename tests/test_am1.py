@@ -1,14 +1,14 @@
 """AM1 Tests"""
 
+import itertools
 from unittest import TestCase
 
-from AMN import InvalidInstructionError
+from AMN import ExecutionError, InvalidInstructionError
 from AMN.am1 import Instruction, Machine, MemoryContext
 
 # do not remove trailing whitespace!
 # fmt: off
-EXAMPLE_PROGRAM1 = \
-"""
+EXAMPLE_PROGRAM1 = """
 INIT 2;
 CALL 24;
 JMP 0;
@@ -92,6 +92,59 @@ STOREI 3;
 WRITEI 3;
 STOREI 3;
 WRITEI 3;
+"""
+
+INVALID_ADDRESS = """
+LOAD(lokal,0);
+LOADA(lokal,0);
+LOADI(lokal,0);
+STORE(lokal,0);
+STOREI 0;
+WRITE(lokal,0);
+WRITEI 0;
+READ(lokal,0);
+READI 0;
+"""
+
+REQUIRES_RUNTIME_STACK = """
+LOAD(global,1);
+STORE(global,1);
+WRITE(global,1);
+READ(global,1);
+RET;
+"""
+
+REQUIRES_INDIRECT_RUNTIME_STACK = """
+LOADI(global,1);
+STOREI 1;
+WRITEI 1;
+READI 1;
+"""
+
+REQUIRES_ONE_STACK = """
+STORE(global,1);
+STOREI 1;
+JMC 0;
+PUSH;
+"""
+
+REQUIRES_TWO_STACK = """
+ADD;
+MUL;
+SUB;
+DIV;
+MOD;
+EQ;
+NE;
+LT;
+GT;
+LE;
+GE;
+"""
+
+REQUIRES_INPUT = """
+READ(global,1);
+READI 1;
 """
 
 
@@ -276,3 +329,35 @@ class MachineTest(TestCase):
         machine = Machine(42, [1, 2], [2, 0, 3, 4, 42, 2, 99], 6, iter([]))
         self.assertEqual(list(machine.frames()), [[42, 2, 99], [2, 0, 3, 4]])
         self.assertEqual(list(Machine.default(iter([])).frames()), [])
+
+    def test_errors(self) -> None:
+        """test handling of execution errors"""
+        invalid_address = Instruction.parse_program(INVALID_ADDRESS)
+        requires_runtime_stack = Instruction.parse_program(REQUIRES_RUNTIME_STACK)
+        requires_one_stack = Instruction.parse_program(REQUIRES_ONE_STACK)
+        requires_two_stack = Instruction.parse_program(REQUIRES_TWO_STACK)
+        requires_input = Instruction.parse_program(REQUIRES_INPUT)
+        requires_indirect = Instruction.parse_program(REQUIRES_INDIRECT_RUNTIME_STACK)
+        machine = Machine.default(iter((1,)))
+        for instruction in requires_one_stack:
+            with self.assertRaises(ExecutionError):
+                machine.execute_instruction(instruction)
+        machine.execute_instruction((Instruction.LIT, MemoryContext.LOKAL, 42))
+        for instruction in requires_two_stack:
+            with self.assertRaises(ExecutionError):
+                machine.execute_instruction(instruction)
+        machine.execute_instruction((Instruction.LIT, MemoryContext.LOKAL, 43))
+        for instruction in itertools.chain(
+            requires_runtime_stack, requires_indirect, invalid_address
+        ):
+            with self.assertRaises(ExecutionError):
+                machine.execute_instruction(instruction)
+        machine.execute_instruction((Instruction.LIT, MemoryContext.LOKAL, 24))
+        machine.execute_instruction((Instruction.PUSH, MemoryContext.GLOBAL, 0))
+        for instruction in requires_indirect:
+            with self.assertRaises(ExecutionError):
+                machine.execute_instruction(instruction)
+        next(machine.input)
+        for instruction in requires_input:
+            with self.assertRaises(ExecutionError):
+                machine.execute_instruction(instruction)
