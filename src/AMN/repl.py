@@ -26,13 +26,15 @@ class REPL(Cmd, Generic[T]):
         self,
         instruction: type[AbstractInstruction[T]],
         machine: AbstractMachine[T],
+        instruction_set: str = "AMN",
         *args: Any,
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.instruction = instruction
         self.machine = machine
-        self.prompt = "AMN >> "
+        self.prompt = f"{instruction_set} >> "
+        self.intro = f"Welcome the the {instruction_set} REPL, type 'help' for help"
 
     def emptyline(self) -> bool:
         """ignore empty lines"""

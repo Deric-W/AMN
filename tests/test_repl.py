@@ -28,6 +28,7 @@ class ReplTest(TestCase):
             Instruction, Machine.default(self.lazy_input()), stdin=self.stdin, stdout=self.stdout
         )
         self.repl.use_rawinput = False
+        self.repl.intro = None
 
     def lazy_input(self) -> Iterator[int]:
         """Lazy consume the input"""

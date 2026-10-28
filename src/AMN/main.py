@@ -74,8 +74,8 @@ def main_repl(
     instruction: type[AbstractInstruction[T]], machine: type[AbstractMachine[T]], args: Namespace
 ) -> int:
     """entry point for the repl subcommand"""
-    repl = REPL(instruction, machine.default(_ReplInput()))
-    repl.cmdloop(f"Welcome the the {args.instructions.upper()} REPL, type 'help' for help")
+    repl = REPL(instruction, machine.default(_ReplInput()), args.instructions.upper())
+    repl.cmdloop()
     return 0
 
 
@@ -100,8 +100,8 @@ def main_exec(
         if output is not None:
             print(f"Output: {output}")  # noqa: T201
     if args.interactive:
-        repl = REPL(instruction, _machine)
-        repl.cmdloop(f"Welcome the the {args.instructions.upper()} REPL, type 'help' for help")
+        repl = REPL(instruction, _machine, args.instructions.upper())
+        repl.cmdloop()
     return 0
 
 
