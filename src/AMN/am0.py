@@ -52,13 +52,13 @@ class Instruction(
 
         Raises a InvalidInstructionError when the parsing fails.
         """
-        name, seperator, payload = line.partition(" ")
+        name, separator, payload = line.partition(" ")
         try:
             instruction = cls[name]
         except KeyError as error:
             reason = "invalid instruction"
             raise InvalidInstructionError(reason, line) from error
-        if seperator == "":
+        if separator == "":
             return (instruction, 0)
         try:
             number_payload = int(payload)
@@ -66,6 +66,16 @@ class Instruction(
             reason = "invalid payload"
             raise InvalidInstructionError(reason, line) from error
         return (instruction, number_payload)
+
+    @classmethod
+    def complete_instruction(cls, line: str) -> Iterator[str]:
+        """Returns possible completions of a line which represent valid instructions."""
+        for instruction in cls:
+            if instruction.name == line:
+                if instruction.has_payload():
+                    yield line + " "
+            elif instruction.name.startswith(line):
+                yield instruction.name
 
     def is_jump(self) -> bool:
         """check if the instruction is a jump"""

@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from cmd import Cmd
-from typing import Any, Final, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Final, Generic, TypeVar
 
 from . import AbstractInstruction, AbstractMachine, ExecutionError, InvalidInstructionError
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 __all__: Final = ("REPL",)
 
@@ -50,6 +53,22 @@ class REPL(Cmd, Generic[T]):
                 if output is not None:
                     self.stdout.write(f"Output: {output}\n")
         return False
+
+    def complete_exec(self, text: str, line: str, begidx: int, endidx: int) -> Sequence[str]:  # noqa: ARG002
+        """Complete arguments for the exec command."""
+        prefix_length = 0
+        while prefix_length < len(line):
+            char = line[prefix_length]
+            if char not in self.identchars:
+                break
+            prefix_length += 1
+        while prefix_length < len(line):
+            char = line[prefix_length]
+            if not char.isspace():
+                break
+            prefix_length += 1
+        results = self.instruction.complete_instruction(line[prefix_length:])
+        return [result[begidx - prefix_length :] for result in results]
 
     def do_reset(self, _: object) -> bool:
         """reset the machine"""

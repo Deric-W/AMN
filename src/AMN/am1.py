@@ -21,7 +21,9 @@ if TYPE_CHECKING:
 
 __all__: Final = ("Instruction", "Machine", "MemoryContext")
 
-_INSTRUCTION_PATTERN: Final = re.compile(r"([A-Z]{2,6})(\((.*)\)|( .*))?")
+_NAME_PATTERN: Final = re.compile(r"[A-Z]*")
+
+_INSTRUCTION_PATTERN: Final = re.compile(r"([A-Z]+)(?:\((.*)\)| (.*))?")
 
 
 @final
@@ -89,8 +91,8 @@ class Instruction(
             reason = "invalid instruction"
             raise InvalidInstructionError(reason, line)
         name = match.group(1)
-        args = match.group(3)
-        arg = match.group(4)
+        args = match.group(2)
+        arg = match.group(3)
         try:
             instruction = cls[name]
         except KeyError as error:
@@ -119,6 +121,31 @@ class Instruction(
             reason = "invalid payload"
             raise InvalidInstructionError(reason, line) from error
         return (instruction, context, number_payload)
+
+    @classmethod
+    def complete_instruction(cls, line: str) -> Iterator[str]:
+        """Returns possible completions of a line which represent valid instructions."""
+        match = _NAME_PATTERN.match(line)
+        if match is None:
+            return
+        name = match.group(0)
+        payload = line[match.end() :]
+        for instruction in cls:
+            if instruction.name == name:
+                if not instruction.has_payload():
+                    continue
+                if payload == "":
+                    yield name + " "
+                    yield name + "("
+                elif payload.startswith("(") and instruction.has_context():
+                    context_name = payload[1:]
+                    for context in MemoryContext:
+                        if context.name == context_name:
+                            yield line + ","
+                        elif context.name.startswith(context_name):
+                            yield f"{name}({context.name},"
+            elif payload == "" and instruction.name.startswith(name):
+                yield instruction.name
 
     def is_jump(self) -> bool:
         """check if the instruction is a jump"""

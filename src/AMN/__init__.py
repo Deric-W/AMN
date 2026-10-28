@@ -100,6 +100,11 @@ class AbstractInstruction(Generic[T_co], metaclass=ABCMeta):
                 reason = "missing semicolon"
                 raise InvalidProgramError(reason, line, number)
 
+    @classmethod
+    def complete_instruction(cls, line: str) -> Iterator[str]:  # noqa: ARG003
+        """Returns possible completions of a line which represent valid instructions."""
+        return iter(())
+
 
 class ExecutionError(Exception):
     """Exception raised when executing an instruction fails."""
