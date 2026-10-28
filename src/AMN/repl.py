@@ -86,10 +86,6 @@ class REPL(Cmd, Generic[T]):
         self.stdout.write(f"{self.machine.state([], [])}\n")
         return False
 
-    def default(self, line: str) -> None:
-        """print an error"""
-        self.stdout.write(f"*** Unknown command: {line}\n")
-
     def do_EOF(self, arg: str) -> bool:  # noqa: N802
         """exit the repl"""
         return self.do_exit(arg)
